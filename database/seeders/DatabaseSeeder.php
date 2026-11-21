@@ -42,10 +42,10 @@ class DatabaseSeeder extends Seeder
 
         // 2. Akun Users
         User::create([
-            'nama' => 'Bendahara RT',
-            'username' => 'admin',
-            'password' => Hash::make('admin123'),
-            'role' => 'bendahara',
+            'nama' => 'Super Admin',
+            'username' => 'superadmin',
+            'password' => Hash::make('super123'),
+            'role' => 'super_admin',
             'warga_id' => null,
         ]);
 
@@ -58,6 +58,22 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::create([
+            'nama' => 'Bendahara RT',
+            'username' => 'admin',
+            'password' => Hash::make('admin123'),
+            'role' => 'bendahara_rt',
+            'warga_id' => null,
+        ]);
+
+        User::create([
+            'nama' => 'Sekretaris RT',
+            'username' => 'sekretaris_rt',
+            'password' => Hash::make('sekretaris123'),
+            'role' => 'sekretaris_rt',
+            'warga_id' => null,
+        ]);
+
+        User::create([
             'nama' => 'Ketua RW',
             'username' => 'rw',
             'password' => Hash::make('rw123'),
@@ -66,10 +82,18 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::create([
-            'nama' => 'Super Admin',
-            'username' => 'superadmin',
-            'password' => Hash::make('super123'),
-            'role' => 'super_admin',
+            'nama' => 'Bendahara RW',
+            'username' => 'bendahara_rw',
+            'password' => Hash::make('bendahararw123'),
+            'role' => 'bendahara_rw',
+            'warga_id' => null,
+        ]);
+
+        User::create([
+            'nama' => 'Sekretaris RW',
+            'username' => 'sekretaris_rw',
+            'password' => Hash::make('sekretarisrw123'),
+            'role' => 'sekretaris_rw',
             'warga_id' => null,
         ]);
 

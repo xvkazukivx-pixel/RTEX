@@ -2,11 +2,15 @@
     $role = auth()->user()->role ?? 'warga';
     $roleLabel = [
         'super_admin' => 'Super Admin',
-        'bendahara' => 'Bendahara',
-        'admin' => 'Bendahara',
-        'rt' => 'RT',
-        'ketua' => 'RT',
-        'rw' => 'RW',
+        'bendahara_rt' => 'Bendahara RT',
+        'bendahara' => 'Bendahara RT',
+        'admin' => 'Bendahara RT',
+        'sekretaris_rt' => 'Sekretaris RT',
+        'rt' => 'Ketua RT',
+        'ketua' => 'Ketua RT',
+        'rw' => 'Ketua RW',
+        'bendahara_rw' => 'Bendahara RW',
+        'sekretaris_rw' => 'Sekretaris RW',
         'warga' => 'Warga',
     ][$role] ?? 'Pengguna';
 
@@ -27,6 +31,14 @@
             ['route' => 'admin.informasi',   'icon' => '📢', 'label' => 'Informasi & Kegiatan'],
             ['route' => 'admin.inventaris',  'icon' => '📦', 'label' => 'Inventaris'],
         ],
+        'bendahara_rt' => [
+            ['route' => 'admin.dashboard',   'icon' => '🏠', 'label' => 'Dashboard'],
+            ['route' => 'admin.iuran',       'icon' => '💵', 'label' => 'Manajemen Iuran'],
+            ['route' => 'admin.bank_sampah.harga', 'icon' => '♻️', 'label' => 'Tarif Bank Sampah'],
+            ['route' => 'admin.transaksi',   'icon' => '🧾', 'label' => 'Input Transaksi'],
+            ['route' => 'admin.konfirmasi',  'icon' => '✅', 'label' => 'Konfirmasi Pembayaran'],
+            ['route' => 'admin.laporan',     'icon' => '📊', 'label' => 'Laporan Keuangan'],
+        ],
         'bendahara' => [
             ['route' => 'admin.dashboard',   'icon' => '🏠', 'label' => 'Dashboard'],
             ['route' => 'admin.iuran',       'icon' => '💵', 'label' => 'Manajemen Iuran'],
@@ -43,20 +55,52 @@
             ['route' => 'admin.konfirmasi',  'icon' => '✅', 'label' => 'Konfirmasi Pembayaran'],
             ['route' => 'admin.laporan',     'icon' => '📊', 'label' => 'Laporan Keuangan'],
         ],
+        'sekretaris_rt' => [
+            ['route' => 'admin.surat',       'icon' => '✉️', 'label' => 'Layanan Surat'],
+            ['route' => 'admin.informasi',   'icon' => '📢', 'label' => 'Informasi & Kegiatan'],
+            ['route' => 'admin.warga',       'icon' => '👪', 'label' => 'Data Warga'],
+            ['route' => 'admin.pengaduan',   'icon' => '💬', 'label' => 'Pengaduan Warga'],
+            ['route' => 'admin.posyandu',    'icon' => '🍼', 'label' => 'Posyandu'],
+            ['route' => 'admin.inventaris',  'icon' => '📦', 'label' => 'Inventaris'],
+        ],
         'rt' => [
+            ['route' => 'ketua.dashboard',   'icon' => '🏠', 'label' => 'Dashboard RT'],
             ['route' => 'ketua.surat',       'icon' => '✉️', 'label' => 'Konfirmasi Surat'],
-            ['route' => 'ketua.informasi',   'icon' => '✅', 'label' => 'Konfirmasi Kegiatan'],
+            ['route' => 'ketua.informasi',   'icon' => '📢', 'label' => 'Konfirmasi Kegiatan'],
             ['route' => 'ketua.laporan',     'icon' => '📄', 'label' => 'Validasi Laporan'],
+            ['route' => 'ketua.monitoring',  'icon' => '👥', 'label' => 'Monitoring Warga'],
+            ['route' => 'ketua.rekap',       'icon' => '📊', 'label' => 'Rekap Kas RT'],
+            ['route' => 'ketua.bank_sampah', 'icon' => '♻️', 'label' => 'Rekap Bank Sampah'],
+            ['route' => 'ketua.posyandu',    'icon' => '🍼', 'label' => 'Rekap Posyandu'],
         ],
         'ketua' => [
+            ['route' => 'ketua.dashboard',   'icon' => '🏠', 'label' => 'Dashboard RT'],
             ['route' => 'ketua.surat',       'icon' => '✉️', 'label' => 'Konfirmasi Surat'],
-            ['route' => 'ketua.informasi',   'icon' => '✅', 'label' => 'Konfirmasi Kegiatan'],
+            ['route' => 'ketua.informasi',   'icon' => '📢', 'label' => 'Konfirmasi Kegiatan'],
             ['route' => 'ketua.laporan',     'icon' => '📄', 'label' => 'Validasi Laporan'],
+            ['route' => 'ketua.monitoring',  'icon' => '👥', 'label' => 'Monitoring Warga'],
+            ['route' => 'ketua.rekap',       'icon' => '📊', 'label' => 'Rekap Kas RT'],
+            ['route' => 'ketua.bank_sampah', 'icon' => '♻️', 'label' => 'Rekap Bank Sampah'],
+            ['route' => 'ketua.posyandu',    'icon' => '🍼', 'label' => 'Rekap Posyandu'],
         ],
         'rw' => [
+            ['route' => 'ketua.dashboard',   'icon' => '🏠', 'label' => 'Dashboard RW'],
             ['route' => 'ketua.surat',       'icon' => '✉️', 'label' => 'Konfirmasi Surat'],
-            ['route' => 'ketua.informasi',   'icon' => '✅', 'label' => 'Konfirmasi Kegiatan'],
+            ['route' => 'ketua.informasi',   'icon' => '📢', 'label' => 'Konfirmasi Kegiatan'],
+            ['route' => 'ketua.laporan',     'icon' => '📄', 'label' => 'Validasi Laporan RW'],
+            ['route' => 'ketua.monitoring',  'icon' => '👥', 'label' => 'Monitoring Warga RW'],
+            ['route' => 'ketua.rekap',       'icon' => '📊', 'label' => 'Rekap Kas RW'],
+        ],
+        'bendahara_rw' => [
+            ['route' => 'ketua.dashboard',   'icon' => '🏠', 'label' => 'Dashboard Kas RW'],
+            ['route' => 'ketua.rekap',       'icon' => '📊', 'label' => 'Rekap Kas RW'],
             ['route' => 'ketua.laporan',     'icon' => '📄', 'label' => 'Validasi Laporan'],
+        ],
+        'sekretaris_rw' => [
+            ['route' => 'ketua.dashboard',   'icon' => '🏠', 'label' => 'Dashboard RW'],
+            ['route' => 'ketua.surat',       'icon' => '✉️', 'label' => 'Konfirmasi Surat RW'],
+            ['route' => 'ketua.informasi',   'icon' => '📢', 'label' => 'Informasi & Kegiatan RW'],
+            ['route' => 'ketua.monitoring',  'icon' => '👥', 'label' => 'Monitoring Warga RW'],
         ],
         'warga' => [
             ['route' => 'warga.dashboard',   'icon' => '🏠', 'label' => 'Dashboard Saya'],
@@ -94,11 +138,27 @@
         </div>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav">
-        @if (in_array($role, ['super_admin', 'bendahara', 'admin'], true))
-            <div class="sidebar-nav__section">Utama</div>
-        @elseif (in_array($role, ['rt', 'ketua', 'rw'], true))
-            <div class="sidebar-nav__section">Administrasi</div>
+        @if ($role === 'super_admin')
+            <div class="sidebar-nav__section">Utama & Kelola</div>
+        @elseif (in_array($role, ['bendahara', 'admin', 'bendahara_rt'], true))
+            <div class="sidebar-nav__section">Keuangan & Kas</div>
+        @elseif ($role === 'sekretaris_rt')
+            <div class="sidebar-nav__section">Sekretariat & Dokumen</div>
+        @elseif (in_array($role, ['rt', 'ketua', 'rw', 'bendahara_rw', 'sekretaris_rw'], true))
+            <div class="sidebar-nav__section">Eksekutif & Validasi</div>
+        @else
+            <div class="sidebar-nav__section">Layanan Warga</div>
         @endif
+        @foreach ($items as $item)
+            @php
+                $isActive = request()->routeIs($item['route']);
+            @endphp
+            <a href="{{ route($item['route']) }}" class="{{ $isActive ? 'active' : '' }}">
+                <span class="nav-icon">{{ $item['icon'] }}</span>
+                <span>{{ $item['label'] }}</span>
+            </a>
+        @endforeach
+    </nav>
         @foreach ($items as $item)
             @php
                 $isActive = request()->routeIs($item['route']);

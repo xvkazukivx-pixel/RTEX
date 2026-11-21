@@ -45,7 +45,7 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return in_array($this->role, ['admin', 'bendahara'], true);
+        return in_array($this->role, ['admin', 'bendahara', 'bendahara_rt'], true);
     }
 
     public function isKetua(): bool
@@ -65,7 +65,17 @@ class User extends Authenticatable
 
     public function isBendahara(): bool
     {
-        return in_array($this->role, ['bendahara', 'admin'], true);
+        return in_array($this->role, ['bendahara', 'bendahara_rt', 'admin', 'bendahara_rw'], true);
+    }
+
+    public function isBendaharaRt(): bool
+    {
+        return in_array($this->role, ['bendahara_rt', 'bendahara', 'admin'], true);
+    }
+
+    public function isSekretarisRt(): bool
+    {
+        return $this->role === 'sekretaris_rt';
     }
 
     public function isRt(): bool
@@ -78,13 +88,31 @@ class User extends Authenticatable
         return $this->role === 'rw';
     }
 
+    public function isBendaharaRw(): bool
+    {
+        return $this->role === 'bendahara_rw';
+    }
+
+    public function isSekretarisRw(): bool
+    {
+        return $this->role === 'sekretaris_rw';
+    }
+
+    public function isSekretaris(): bool
+    {
+        return in_array($this->role, ['sekretaris_rt', 'sekretaris_rw'], true);
+    }
+
     public function dashboardRouteName(): string
     {
         return match ($this->role) {
-            'bendahara', 'admin' => 'admin.dashboard',
+            'super_admin' => 'admin.dashboard',
+            'bendahara_rt', 'bendahara', 'admin' => 'admin.dashboard',
+            'sekretaris_rt' => 'admin.surat',
             'rt', 'ketua' => 'ketua.surat',
             'rw' => 'ketua.surat',
-            'super_admin' => 'admin.dashboard',
+            'bendahara_rw' => 'ketua.rekap',
+            'sekretaris_rw' => 'ketua.surat',
             default => 'warga.dashboard',
         };
     }

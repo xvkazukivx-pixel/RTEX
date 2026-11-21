@@ -136,4 +136,41 @@ class AuthTest extends TestCase
             ->assertSee('Tren Pemasukan 6 Bulan Terakhir')
             ->assertSee('Persentase Kepatuhan');
     }
+
+    public function test_sekretaris_rt_can_login_and_access_admin_routes(): void
+    {
+        $response = $this->post('/login', [
+            'username' => 'sekretaris_rt',
+            'password' => 'sekretaris123',
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertRedirect(route('admin.surat'));
+        $this->assertAuthenticated();
+
+        $user = User::where('username', 'sekretaris_rt')->firstOrFail();
+        $this->actingAs($user)->get(route('admin.surat'))->assertOk();
+        $this->actingAs($user)->get(route('admin.informasi'))->assertOk();
+        $this->actingAs($user)->get(route('admin.warga'))->assertOk();
+
+        // Sekretaris RT cannot access finance or user management
+        $this->actingAs($user)->get(route('admin.iuran'))->assertStatus(403);
+        $this->actingAs($user)->get(route('admin.users'))->assertStatus(403);
+    }
+
+    public function test_bendahara_rw_can_access_rekap_and_laporan(): void
+    {
+        $user = User::where('username', 'bendahara_rw')->firstOrFail();
+        $this->actingAs($user)->get(route('ketua.rekap'))->assertOk();
+        $this->actingAs($user)->get(route('ketua.laporan'))->assertOk();
+        $this->actingAs($user)->get(route('ketua.dashboard'))->assertOk();
+    }
+
+    public function test_sekretaris_rw_can_access_surat_and_informasi(): void
+    {
+        $user = User::where('username', 'sekretaris_rw')->firstOrFail();
+        $this->actingAs($user)->get(route('ketua.surat'))->assertOk();
+        $this->actingAs($user)->get(route('ketua.informasi'))->assertOk();
+        $this->actingAs($user)->get(route('ketua.dashboard'))->assertOk();
+    }
 }

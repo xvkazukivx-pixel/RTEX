@@ -27,20 +27,34 @@ class RoleMiddleware
         }
 
         $aliases = [
-            'admin' => ['admin', 'bendahara'],
-            'bendahara' => ['bendahara', 'admin'],
+            'admin' => ['admin', 'bendahara', 'bendahara_rt'],
+            'bendahara' => ['bendahara', 'bendahara_rt', 'admin'],
+            'bendahara_rt' => ['bendahara_rt', 'bendahara', 'admin'],
+            'sekretaris_rt' => ['sekretaris_rt'],
             'ketua' => ['ketua', 'rt'],
-            'rt' => ['rt', 'ketua', 'rw'],
+            'rt' => ['rt', 'ketua'],
             'rw' => ['rw'],
+            'bendahara_rw' => ['bendahara_rw'],
+            'sekretaris_rw' => ['sekretaris_rw'],
             'warga' => ['warga'],
         ];
 
-        $allowedRoles = $roles;
-        foreach ($roles as $requestedRole) {
+        $flatRoles = [];
+        foreach ($roles as $r) {
+            foreach (explode(',', $r) as $part) {
+                $part = trim($part);
+                if ($part !== '') {
+                    $flatRoles[] = $part;
+                }
+            }
+        }
+
+        $allowedRoles = $flatRoles;
+        foreach ($flatRoles as $requestedRole) {
             $allowedRoles = array_merge($allowedRoles, $aliases[$requestedRole] ?? []);
         }
 
-        if (!empty($roles) && !in_array($role, array_unique($allowedRoles), true)) {
+        if (!empty($flatRoles) && !in_array($role, array_unique($allowedRoles), true)) {
             abort(403, 'Akses tidak diizinkan untuk peran akun Anda.');
         }
 

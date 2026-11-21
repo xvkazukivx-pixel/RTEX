@@ -46,18 +46,49 @@
 
         <!-- PANEL MASUK AKUN -->
         <div id="panelMasuk" class="auth-panel {{ $registrationErrors || session('tab') === 'daftar' ? '' : 'active' }}">
-            <form action="{{ route('login.post') }}" method="POST" novalidate>
+            <form action="{{ route('login.post') }}" method="POST" id="formLogin" novalidate>
                 @csrf
                 <div class="mb-3">
                     <label class="form-label-rt">Username</label>
-                    <input type="text" name="username" class="form-control-rt" placeholder="Masukkan username" value="{{ old('username') }}" required autofocus>
+                    <input type="text" name="username" id="loginUsername" class="form-control-rt" placeholder="Masukkan username" value="{{ old('username') }}" required autofocus>
                 </div>
                 <div class="mb-4">
                     <label class="form-label-rt">Password</label>
-                    <input type="password" name="password" class="form-control-rt" placeholder="Masukkan password" required>
+                    <input type="password" name="password" id="loginPassword" class="form-control-rt" placeholder="Masukkan password" required>
                 </div>
                 <button type="submit" class="btn-rt-primary w-100" style="padding:11px;">Masuk</button>
             </form>
+
+            <div class="quick-login-wrap mt-4 pt-3">
+                <div class="quick-login-title">⚡ Akses Cepat Login</div>
+                <div class="quick-login-grid">
+                    <button type="button" class="btn-quick-role" data-u="superadmin" data-p="super123" title="Login Super Admin">
+                        <span class="role-badge role-super">👑 Super Admin</span>
+                    </button>
+                    <button type="button" class="btn-quick-role" data-u="ketua" data-p="ketua123" title="Login Ketua RT">
+                        <span class="role-badge role-rt">🏛️ Ketua RT</span>
+                    </button>
+                    <button type="button" class="btn-quick-role" data-u="admin" data-p="admin123" title="Login Bendahara RT">
+                        <span class="role-badge role-bendahara">💵 Bendahara RT</span>
+                    </button>
+                    <button type="button" class="btn-quick-role" data-u="sekretaris_rt" data-p="sekretaris123" title="Login Sekretaris RT">
+                        <span class="role-badge role-sekretaris">📝 Sekretaris RT</span>
+                    </button>
+                    <button type="button" class="btn-quick-role" data-u="rw" data-p="rw123" title="Login Ketua RW">
+                        <span class="role-badge role-rw">🏢 Ketua RW</span>
+                    </button>
+                    <button type="button" class="btn-quick-role" data-u="bendahara_rw" data-p="bendahararw123" title="Login Bendahara RW">
+                        <span class="role-badge role-bendahara-rw">💰 Bendahara RW</span>
+                    </button>
+                    <button type="button" class="btn-quick-role" data-u="sekretaris_rw" data-p="sekretarisrw123" title="Login Sekretaris RW">
+                        <span class="role-badge role-sekretaris-rw">📋 Sekretaris RW</span>
+                    </button>
+                    <button type="button" class="btn-quick-role" data-u="hafis" data-p="warga123" title="Login Warga">
+                        <span class="role-badge role-warga">👤 Warga</span>
+                    </button>
+                </div>
+                <div class="quick-login-hint">Klik peran di atas untuk langsung masuk otomatis</div>
+            </div>
         </div>
 
         <!-- PANEL DAFTAR AKUN (WARGA) -->
@@ -118,6 +149,21 @@ document.querySelectorAll('.auth-tab-btn').forEach(function (btn) {
         document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+});
+
+document.querySelectorAll('.btn-quick-role').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        const u = this.getAttribute('data-u');
+        const p = this.getAttribute('data-p');
+        const usernameInput = document.getElementById('loginUsername');
+        const passwordInput = document.getElementById('loginPassword');
+        const form = document.getElementById('formLogin');
+        if (usernameInput && passwordInput && form) {
+            usernameInput.value = u;
+            passwordInput.value = p;
+            form.submit();
+        }
     });
 });
 </script>

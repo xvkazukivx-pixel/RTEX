@@ -647,7 +647,19 @@ class AdminController extends Controller
     public function users()
     {
         $daftarUser = User::with('warga')
-            ->orderByRaw("CASE role WHEN 'super_admin' THEN 1 WHEN 'bendahara' THEN 2 WHEN 'rt' THEN 3 WHEN 'rw' THEN 4 WHEN 'warga' THEN 5 ELSE 6 END")
+            ->orderByRaw("CASE role 
+                WHEN 'super_admin' THEN 1 
+                WHEN 'rt' THEN 2 
+                WHEN 'ketua' THEN 2 
+                WHEN 'bendahara_rt' THEN 3 
+                WHEN 'bendahara' THEN 3 
+                WHEN 'admin' THEN 3 
+                WHEN 'sekretaris_rt' THEN 4 
+                WHEN 'rw' THEN 5 
+                WHEN 'bendahara_rw' THEN 6 
+                WHEN 'sekretaris_rw' THEN 7 
+                WHEN 'warga' THEN 8 
+                ELSE 9 END")
             ->orderBy('nama')
             ->get();
         $wargaTanpaAkun = Warga::doesntHave('user')->where('status_aktif', true)->orderBy('nama')->get();
@@ -661,7 +673,7 @@ class AdminController extends Controller
             'nama' => 'required|string|max:100',
             'username' => 'required|string|max:50|unique:users,username',
             'password' => 'required|string|min:6',
-            'role' => 'required|in:super_admin,bendahara,rt,rw,warga',
+            'role' => 'required|in:super_admin,rt,ketua,bendahara_rt,bendahara,admin,sekretaris_rt,rw,bendahara_rw,sekretaris_rw,warga',
             'warga_id' => 'nullable|exists:warga,id',
         ]);
 

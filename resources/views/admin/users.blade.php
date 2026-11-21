@@ -24,12 +24,18 @@
                     <td>
                         @if ($u->role === 'super_admin')
                             <span class="badge text-bg-danger">Super Admin</span>
-                        @elseif (in_array($u->role, ['bendahara', 'admin'], true))
-                            <span class="badge text-bg-primary">Bendahara</span>
                         @elseif (in_array($u->role, ['rt', 'ketua'], true))
-                            <span class="badge text-bg-warning text-dark">RT</span>
+                            <span class="badge text-bg-warning text-dark">Ketua RT</span>
+                        @elseif (in_array($u->role, ['bendahara_rt', 'bendahara', 'admin'], true))
+                            <span class="badge text-bg-primary">Bendahara RT</span>
+                        @elseif ($u->role === 'sekretaris_rt')
+                            <span class="badge text-bg-info text-white" style="background-color:#0284c7!important;">Sekretaris RT</span>
                         @elseif ($u->role === 'rw')
-                            <span class="badge text-bg-info">RW</span>
+                            <span class="badge text-bg-info">Ketua RW</span>
+                        @elseif ($u->role === 'bendahara_rw')
+                            <span class="badge text-bg-primary" style="background-color:#0d9488!important;">Bendahara RW</span>
+                        @elseif ($u->role === 'sekretaris_rw')
+                            <span class="badge text-bg-secondary" style="background-color:#6366f1!important;">Sekretaris RW</span>
                         @else
                             <span class="badge text-bg-secondary">Warga</span>
                         @endif
@@ -81,10 +87,13 @@
             <div class="mb-3">
                 <label class="form-label-rt">Peran (Role)</label>
                 <select name="role" id="roleSelect" class="form-control-rt" required>
-                    <option value="super_admin">Super Admin</option>
-                    <option value="bendahara">Bendahara (keuangan)</option>
-                    <option value="rt">RT (konfirmasi)</option>
-                    <option value="rw">RW (konfirmasi)</option>
+                    <option value="super_admin">Super Admin (Akses Penuh)</option>
+                    <option value="rt">Ketua RT (Persetujuan & Monitoring RT)</option>
+                    <option value="bendahara_rt">Bendahara RT (Keuangan & Iuran RT)</option>
+                    <option value="sekretaris_rt">Sekretaris RT (Administrasi & Surat RT)</option>
+                    <option value="rw">Ketua RW (Pengawasan & Rekap RW)</option>
+                    <option value="bendahara_rw">Bendahara RW (Keuangan & Rekap RW)</option>
+                    <option value="sekretaris_rw">Sekretaris RW (Administrasi RW)</option>
                     <option value="warga">Warga</option>
                 </select>
             </div>

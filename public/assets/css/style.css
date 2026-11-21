@@ -2561,3 +2561,150 @@ body.role-warga .btn-logout {
         grid-template-columns: minmax(0, 1fr);
     }
 }
+
+/* =========================================================
+   Akses Cepat Login Badges & Grid
+   ========================================================= */
+.quick-login-wrap {
+    border-top: 1px dashed rgba(36, 124, 187, 0.25);
+}
+
+.quick-login-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-primary);
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.quick-login-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+
+.btn-quick-role {
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.btn-quick-role:hover {
+    transform: translateY(-2px);
+}
+
+.btn-quick-role:active {
+    transform: translateY(0);
+}
+
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 9px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+}
+
+.role-super {
+    background: #fdf2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+.btn-quick-role:hover .role-super {
+    background: #b91c1c;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(185, 28, 28, 0.25);
+}
+
+.role-rt {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #fde68a;
+}
+.btn-quick-role:hover .role-rt {
+    background: #b45309;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(180, 83, 9, 0.25);
+}
+
+.role-bendahara {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+.btn-quick-role:hover .role-bendahara {
+    background: #1d4ed8;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(29, 78, 216, 0.25);
+}
+
+.role-sekretaris {
+    background: #f0fdfa;
+    color: #0f766e;
+    border-color: #99f6e4;
+}
+.btn-quick-role:hover .role-sekretaris {
+    background: #0f766e;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(15, 118, 110, 0.25);
+}
+
+.role-rw {
+    background: #f0f9ff;
+    color: #0369a1;
+    border-color: #bae6fd;
+}
+.btn-quick-role:hover .role-rw {
+    background: #0369a1;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(3, 105, 161, 0.25);
+}
+
+.role-bendahara-rw {
+    background: #f0fdf4;
+    color: #15803d;
+    border-color: #bbf7d0;
+}
+.btn-quick-role:hover .role-bendahara-rw {
+    background: #15803d;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(21, 128, 61, 0.25);
+}
+
+.role-sekretaris-rw {
+    background: #faf5ff;
+    color: #7e22ce;
+    border-color: #e9d5ff;
+}
+.btn-quick-role:hover .role-sekretaris-rw {
+    background: #7e22ce;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(126, 34, 206, 0.25);
+}
+
+.role-warga {
+    background: #f8fafc;
+    color: #475569;
+    border-color: #e2e8f0;
+}
+.btn-quick-role:hover .role-warga {
+    background: #475569;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(71, 85, 105, 0.25);
+}
+
+.quick-login-hint {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+}

@@ -45,26 +45,13 @@ Route::middleware(['auth', 'role:bendahara'])->prefix('admin')->name('admin.')->
     Route::post('/bank-sampah/harga/{id}', [AdminController::class, 'bankSampahHargaUpdate'])->name('bank_sampah.harga.update')->whereNumber('id');
 });
 
-// Modul Super Admin (akses penuh)
-Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')->group(function () {
+// Modul Sekretariat & Administrasi RT (Super Admin & Sekretaris RT)
+Route::middleware(['auth', 'role:super_admin,sekretaris_rt'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/warga', [AdminController::class, 'warga'])->name('warga');
     Route::post('/warga/store', [AdminController::class, 'wargaStore'])->name('warga.store');
     Route::post('/warga/{id}/anggota', [AdminController::class, 'wargaAnggotaStore'])->name('warga.anggota.store');
     Route::post('/warga/update/{id}', [AdminController::class, 'wargaUpdate'])->name('warga.update');
     Route::post('/warga/delete/{id}', [AdminController::class, 'wargaDestroy'])->name('warga.destroy');
-
-    Route::get('/persetujuan', [AdminController::class, 'persetujuan'])->name('persetujuan');
-    Route::post('/persetujuan/{id}', [AdminController::class, 'persetujuanAction'])->name('persetujuan.action');
-
-    Route::get('/users', [AdminController::class, 'users'])->name('users');
-    Route::post('/users/store', [AdminController::class, 'usersStore'])->name('users.store');
-    Route::post('/users/reset-password/{id}', [AdminController::class, 'usersResetPassword'])->name('users.reset_password');
-    Route::post('/users/delete/{id}', [AdminController::class, 'usersDestroy'])->name('users.destroy');
-
-    Route::get('/bank-sampah', [AdminController::class, 'bankSampah'])->name('bank_sampah');
-    Route::post('/bank-sampah/setoran/store', [AdminController::class, 'bankSampahSetoranStore'])->name('bank_sampah.setoran.store');
-    Route::post('/bank-sampah/jenis/store', [AdminController::class, 'bankSampahJenisStore'])->name('bank_sampah.jenis.store');
-    Route::post('/bank-sampah/setoran/{id}', [AdminController::class, 'bankSampahSetoranAction'])->name('bank_sampah.setoran.action');
 
     Route::get('/pengaduan', [AdminController::class, 'pengaduan'])->name('pengaduan');
     Route::post('/pengaduan/{pengaduan}', [AdminController::class, 'pengaduanAction'])->name('pengaduan.action');
@@ -95,8 +82,27 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::post('/kegiatan/selesai/{id}', [AdminController::class, 'kegiatanSelesai'])->name('kegiatan.selesai');
 });
 
-// Modul RT/RW: hanya konfirmasi dan validasi
-Route::middleware(['auth', 'role:rt'])->prefix('ketua')->name('ketua.')->group(function () {
+// Modul Khusus Super Admin (Konfigurasi Akun, Persetujuan Warga Baru, Bank Sampah)
+Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/persetujuan', [AdminController::class, 'persetujuan'])->name('persetujuan');
+    Route::post('/persetujuan/{id}', [AdminController::class, 'persetujuanAction'])->name('persetujuan.action');
+
+    Route::get('/users', [AdminController::class, 'users'])->name('users');
+    Route::post('/users/store', [AdminController::class, 'usersStore'])->name('users.store');
+    Route::post('/users/reset-password/{id}', [AdminController::class, 'usersResetPassword'])->name('users.reset_password');
+    Route::post('/users/delete/{id}', [AdminController::class, 'usersDestroy'])->name('users.destroy');
+
+    Route::get('/bank-sampah', [AdminController::class, 'bankSampah'])->name('bank_sampah');
+    Route::post('/bank-sampah/setoran/store', [AdminController::class, 'bankSampahSetoranStore'])->name('bank_sampah.setoran.store');
+    Route::post('/bank-sampah/jenis/store', [AdminController::class, 'bankSampahJenisStore'])->name('bank_sampah.jenis.store');
+    Route::post('/bank-sampah/setoran/{id}', [AdminController::class, 'bankSampahSetoranAction'])->name('bank_sampah.setoran.action');
+});
+
+// Modul Eksekutif, Pengesahan & Pengawasan (RT, RW, Bendahara RW, Sekretaris RW)
+Route::middleware(['auth', 'role:rt,rw,bendahara_rw,sekretaris_rw'])->prefix('ketua')->name('ketua.')->group(function () {
+    Route::get('/dashboard', [KetuaController::class, 'dashboard'])->name('dashboard');
+    Route::get('/monitoring', [KetuaController::class, 'monitoring'])->name('monitoring');
+    Route::get('/rekap', [KetuaController::class, 'rekap'])->name('rekap');
     Route::get('/laporan', [KetuaController::class, 'laporan'])->name('laporan');
     Route::post('/laporan/validasi', [KetuaController::class, 'validasiLaporan'])->name('laporan.validasi');
 
@@ -105,13 +111,6 @@ Route::middleware(['auth', 'role:rt'])->prefix('ketua')->name('ketua.')->group(f
 
     Route::get('/informasi', [KetuaController::class, 'informasi'])->name('informasi');
     Route::post('/kegiatan/{id}', [KetuaController::class, 'kegiatanAction'])->name('kegiatan.action');
-});
-
-// Akses baca monitoring hanya untuk Super Admin
-Route::middleware(['auth', 'role:super_admin'])->prefix('ketua')->name('ketua.')->group(function () {
-    Route::get('/dashboard', [KetuaController::class, 'dashboard'])->name('dashboard');
-    Route::get('/monitoring', [KetuaController::class, 'monitoring'])->name('monitoring');
-    Route::get('/rekap', [KetuaController::class, 'rekap'])->name('rekap');
 
     Route::get('/bank-sampah', [KetuaController::class, 'bankSampah'])->name('bank_sampah');
     Route::get('/posyandu', [KetuaController::class, 'posyandu'])->name('posyandu');
