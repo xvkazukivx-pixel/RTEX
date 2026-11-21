@@ -5,47 +5,94 @@
 @section('page_subtitle', 'Pengawasan Akses Keluar-Masuk Warga Berbasis e-KTP RFID / NFC')
 
 @section('content')
+<style>
+.scan-radar-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.scan-pulse {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.2);
+    animation: radarPulse 1.8s infinite ease-out;
+}
+.scan-icon {
+    font-size: 42px;
+    z-index: 2;
+}
+@keyframes radarPulse {
+    0% { transform: scale(0.6); opacity: 0.8; }
+    50% { opacity: 0.4; }
+    100% { transform: scale(1.4); opacity: 0; }
+}
+</style>
+
 <!-- Statistik Real-Time Hari Ini -->
 <div class="row g-3 mb-4">
     <div class="col-xl-3 col-sm-6">
         <div class="stat-card">
             <div class="stat-label">Total Akses Hari Ini</div>
-            <div class="stat-value">{{ $stats['today_total'] }}</div>
+            <div class="stat-value" id="statTodayTotal">{{ $stats['today_total'] }}</div>
             <div class="stat-hint">Seluruh kendaraan/warga melintas</div>
         </div>
     </div>
     <div class="col-xl-3 col-sm-6">
         <div class="stat-card">
             <div class="stat-label" style="color: #059669;">Akses Diterima</div>
-            <div class="stat-value text-success">{{ $stats['today_granted'] }}</div>
+            <div class="stat-value text-success" id="statTodayGranted">{{ $stats['today_granted'] }}</div>
             <div class="stat-hint">Warga resmi berizin</div>
         </div>
     </div>
     <div class="col-xl-3 col-sm-6">
         <div class="stat-card {{ $stats['today_denied'] > 0 ? 'accent' : '' }}">
             <div class="stat-label" style="color: #dc2626;">Akses Ditolak</div>
-            <div class="stat-value text-danger">{{ $stats['today_denied'] }}</div>
+            <div class="stat-value text-danger" id="statTodayDenied">{{ $stats['today_denied'] }}</div>
             <div class="stat-hint">KTP asing / tidak dikenal</div>
         </div>
     </div>
     <div class="col-xl-3 col-sm-6">
         <div class="stat-card">
             <div class="stat-label">Total KTP Terdaftar</div>
-            <div class="stat-value text-primary">{{ $stats['registered_users'] }}</div>
+            <div class="stat-value text-primary" id="statRegisteredUsers">{{ $stats['registered_users'] }}</div>
             <div class="stat-hint">Warga pemegang kartu aktif</div>
         </div>
     </div>
 </div>
 
+<!-- Quick Control Actions -->
 <div class="card-rt mb-4">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
             <div class="section-title mb-1"><span class="dot"></span> Kontrol Gerbang Eksekutif</div>
             <div class="text-muted-rt" style="font-size: 13.5px;">
                 Status Smart Barrier Gate: <span class="badge bg-success-subtle text-success border border-success-subtle">● TERHUBUNG</span>
+                &nbsp;|&nbsp; Endpoint: <code style="font-size: 12px; background: rgba(59,130,246,0.1); padding: 2px 6px; border-radius: 4px;">POST /api/iot/gate/tap</code>
             </div>
         </div>
-        <div>
+        <div class="d-flex flex-wrap gap-2">
+            <!-- Scan e-KTP Langsung via ESP32 -->
+            <button type="button" class="btn-rt-primary" onclick="openAdminScanModal()">
+                📡 Scan e-KTP (via ESP32)
+            </button>
+
+            <!-- Uji Simulasi Tap Gerbang -->
+            <button type="button" class="btn-rt-outline" style="border-color: #3b82f6; color: #2563eb;" data-bs-toggle="modal" data-bs-target="#modalAdminSimulateTap">
+                ⚡ Uji Tap Gerbang (Simulasi)
+            </button>
+
+            <!-- Input Manual UID -->
+            <button type="button" class="btn-rt-outline" data-bs-toggle="modal" data-bs-target="#modalRegisterWarga">
+                ➕ Input UID Manual
+            </button>
+
+            <!-- Buka Portal Darurat -->
             <form action="{{ route('ketua.iot_gate.manual_open') }}" method="POST" class="d-inline" onsubmit="return confirm('Buka portal perumahan secara manual sekarang?');">
                 @csrf
                 <button type="submit" class="btn-rt-outline" style="border-color: #f59e0b; color: #b45309;">
@@ -56,82 +103,740 @@
     </div>
 </div>
 
-<div class="card-rt">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div class="section-title mb-0"><span class="dot"></span> Log Keluar-Masuk Gerbang Terkini</div>
-        <form method="GET" class="d-flex gap-2">
-            <input type="text" name="q" class="form-control form-control-sm" placeholder="Cari nama, rumah, UID..." value="{{ $search }}">
-            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                <option value="">Semua Status</option>
-                <option value="granted" {{ $statusFilter === 'granted' ? 'selected' : '' }}>Diterima Saja</option>
-                <option value="denied" {{ $statusFilter === 'denied' ? 'selected' : '' }}>Ditolak Saja</option>
-            </select>
-            <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
-        </form>
-    </div>
+<!-- Tabs: Log Realtime, Kelola KTP, & Panduan Hardware -->
+<ul class="nav nav-pills mb-3 gap-2" id="iotGateTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-semibold" id="tab-logs-btn" data-bs-toggle="tab" data-bs-target="#tab-logs" type="button" role="tab">
+            📋 Log Keluar-Masuk Real-time
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-semibold" id="tab-users-btn" data-bs-toggle="tab" data-bs-target="#tab-users" type="button" role="tab">
+            👥 Data KTP Seluruh Warga ({{ $wargaUsers->count() }})
+        </button>
+    </li>
+</ul>
 
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" style="font-size: 13.5px;">
-            <thead class="table-light">
-                <tr>
-                    <th>Waktu Melintas</th>
-                    <th>Nama Warga</th>
-                    <th>No. Rumah</th>
-                    <th>UID KTP</th>
-                    <th>Status Akses</th>
-                    <th>Aksi Portal</th>
-                    <th>Keterangan</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($logs as $log)
-                    <tr>
-                        <td>{{ $log->tapped_at->format('H:i:s - d/m/Y') }}</td>
-                        <td>
-                            <strong>{{ $log->warga_nama }}</strong>
-                            @if ($log->user)
-                                <div style="font-size: 11px; color: #64748b;">Peran: {{ $log->user->role }}</div>
-                            @endif
-                        </td>
-                        <td><span class="badge bg-light text-dark border">{{ $log->no_rumah ?: '-' }}</span></td>
-                        <td><code class="font-monospace fw-semibold">{{ $log->rfid_uid }}</code></td>
-                        <td>
-                            @if ($log->access_status === 'granted')
-                                <span class="badge bg-success-subtle text-success border border-success-subtle">
-                                    ✓ Diterima
-                                </span>
-                            @else
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
-                                    ✗ Ditolak
-                                </span>
-                            @endif
-                        </td>
-                        <td>
-                            @if ($log->gate_action === 'OPEN_GATE')
-                                <span class="text-success fw-semibold">🟢 Portal Terbuka</span>
-                            @elseif ($log->gate_action === 'MANUAL_OPEN')
-                                <span class="text-warning fw-semibold">🟡 Buka Manual</span>
-                            @else
-                                <span class="text-muted">🔒 Terkunci</span>
-                            @endif
-                        </td>
-                        <td class="text-muted" style="max-width: 250px;">
-                            {{ $log->denial_reason ?: 'Verifikasi e-KTP Valid' }}
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="text-center py-4 text-muted">Belum ada catatan log aktivitas gerbang.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+<div class="tab-content" id="iotGateTabsContent">
+    <!-- TAB 1: LOG REAL-TIME -->
+    <div class="tab-pane fade show active" id="tab-logs" role="tabpanel">
+        <div class="card-rt">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div class="section-title mb-0">
+                    <span class="dot"></span> Log Keluar-Masuk Gerbang Terkini
+                    <span class="badge bg-light text-muted border ms-2" style="font-size: 11px; font-weight: normal;" id="logAutoRefreshStatus">● Auto-update aktif</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="fetchLatestLogs(true)" title="Segarkan Data Log">
+                        🔄 Refresh Log
+                    </button>
+                    <form method="GET" class="d-flex gap-2">
+                        <input type="text" name="q" class="form-control form-control-sm" placeholder="Cari nama, rumah, UID..." value="{{ $search }}">
+                        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Semua Status</option>
+                            <option value="granted" {{ $statusFilter === 'granted' ? 'selected' : '' }}>Diterima Saja</option>
+                            <option value="denied" {{ $statusFilter === 'denied' ? 'selected' : '' }}>Ditolak Saja</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
+                    </form>
+                </div>
+            </div>
 
-    @if ($logs->hasPages())
-        <div class="mt-3">
-            {{ $logs->links() }}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 13.5px;">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Waktu Melintas</th>
+                            <th>Nama Warga</th>
+                            <th>No. Rumah</th>
+                            <th>UID KTP</th>
+                            <th>Status Akses</th>
+                            <th>Aksi Portal</th>
+                            <th>Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody">
+                        @forelse ($logs as $log)
+                            <tr>
+                                <td>{{ $log->tapped_at->format('H:i:s - d/m/Y') }}</td>
+                                <td>
+                                    <strong>{{ $log->warga_nama }}</strong>
+                                    @if ($log->user)
+                                        <div style="font-size: 11px; color: #64748b;">Peran: {{ $log->user->role }}</div>
+                                    @endif
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{ $log->no_rumah ?: '-' }}</span></td>
+                                <td><code class="font-monospace fw-semibold">{{ $log->rfid_uid }}</code></td>
+                                <td>
+                                    @if ($log->access_status === 'granted')
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                            ✓ Diterima
+                                        </span>
+                                    @else
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                            ✗ Ditolak
+                                        </span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($log->gate_action === 'OPEN_GATE')
+                                        <span class="text-success fw-semibold">🟢 Portal Terbuka</span>
+                                    @elseif ($log->gate_action === 'MANUAL_OPEN')
+                                        <span class="text-warning fw-semibold">🟡 Buka Manual</span>
+                                    @else
+                                        <span class="text-muted">🔒 Terkunci</span>
+                                    @endif
+                                </td>
+                                <td class="text-muted" style="max-width: 250px;">
+                                    {{ $log->denial_reason ?: 'Verifikasi e-KTP Valid' }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr id="emptyLogsRow">
+                                <td colspan="7" class="text-center py-4 text-muted">Belum ada catatan log aktivitas gerbang.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if ($logs->hasPages())
+                <div class="mt-3">
+                    {{ $logs->links() }}
+                </div>
+            @endif
         </div>
-    @endif
+    </div>
+
+    <!-- TAB 2: DATA KTP SELURUH WARGA -->
+    <div class="tab-pane fade" id="tab-users" role="tabpanel">
+        <div class="card-rt">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div class="section-title mb-0"><span class="dot"></span> Daftar Pengguna & Status Hak Akses KTP</div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-rt-primary" onclick="openAdminScanModal()">
+                        📡 Scan e-KTP Baru
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 13.5px;">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nama Akun</th>
+                            <th>Role</th>
+                            <th>No. Rumah</th>
+                            <th>Status KTP</th>
+                            <th>UID e-KTP</th>
+                            <th>Status Akses</th>
+                            <th class="text-end">Aksi Pengurus</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wargaTableBody">
+                        @foreach ($wargaUsers as $wu)
+                            <tr id="user-row-{{ $wu->id }}">
+                                <td>
+                                    <strong>{{ $wu->nama }}</strong>
+                                    <div style="font-size: 11.5px; color: #64748b;">{{ $wu->username }}</div>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{ $wu->role }}</span></td>
+                                <td>{{ $wu->warga?->no_rumah ?: '-' }}</td>
+                                <td>
+                                    @if ($wu->hasRfidRegistered())
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                            ● Terdaftar
+                                        </span>
+                                    @else
+                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                                            ○ Belum Terdaftar
+                                        </span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($wu->hasRfidRegistered())
+                                        <code class="font-monospace fw-semibold">{{ $wu->rfid_uid }}</code>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($wu->hasRfidRegistered())
+                                        @if ($wu->rfid_is_active)
+                                            <span class="badge bg-success text-white">Aktif</span>
+                                        @else
+                                            <span class="badge bg-danger text-white">Diblokir</span>
+                                        @endif
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-1">
+                                        <!-- Tombol Scan KTP Langsung via ESP32 -->
+                                        <button type="button" class="btn btn-sm btn-primary text-white" onclick="openAdminScanForUser({{ $wu->id }}, '{{ addslashes($wu->nama) }}', '{{ $wu->warga?->no_rumah ?? '-' }}')" title="Scan KTP langsung via ESP32 untuk {{ $wu->nama }}">
+                                            📡 Scan KTP
+                                        </button>
+
+                                        <!-- Edit/Assign Manual UID Button -->
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setEditUserModal({{ $wu->id }}, '{{ addslashes($wu->nama) }}', '{{ $wu->rfid_uid ?? '' }}')" title="Input / Edit UID Manual">
+                                            ✏️ {{ $wu->hasRfidRegistered() ? 'Ubah' : 'Manual' }}
+                                        </button>
+
+                                        @if ($wu->hasRfidRegistered())
+                                            <!-- Toggle Active/Block Button -->
+                                            <form action="{{ route('ketua.iot_gate.toggle_status', $wu->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm {{ $wu->rfid_is_active ? 'btn-outline-warning' : 'btn-outline-success' }}" title="{{ $wu->rfid_is_active ? 'Blokir Akses' : 'Buka Blokir' }}">
+                                                    {{ $wu->rfid_is_active ? '⛔ Blokir' : '✓ Aktifkan' }}
+                                                </button>
+                                            </form>
+
+                                            <!-- Remove Button -->
+                                            <form action="{{ route('ketua.iot_gate.remove_user', $wu->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus KTP dari user {{ $wu->nama }}?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus KTP">
+                                                    🗑️
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- ========================================================================= -->
+<!-- MODAL 1: SCAN e-KTP REAL-TIME VIA ESP32                                   -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="modalAdminScanEsp32" tabindex="-1" aria-labelledby="modalAdminScanEsp32Label" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: 1px solid rgba(59, 130, 246, 0.3);">
+            <div class="modal-header border-0 pb-0">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size: 22px;">📡</span>
+                    <h5 class="modal-title fw-bold" id="modalAdminScanEsp32Label">Pindai e-KTP via ESP32</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="stopAdminScanPolling()"></button>
+            </div>
+            <div class="modal-body py-3">
+                <!-- Dropdown Pilih Warga Target -->
+                <div class="mb-3" id="adminScanUserSelectContainer">
+                    <label class="form-label fw-semibold" style="font-size: 13px;">Target Warga yang Didaftarkan:</label>
+                    <select id="adminScanTargetUserId" class="form-select form-select-sm" onchange="onScanTargetUserChanged()">
+                        @foreach ($wargaUsers as $wu)
+                            <option value="{{ $wu->id }}" data-nama="{{ $wu->nama }}" data-rumah="{{ $wu->warga?->no_rumah ?? '-' }}">
+                                {{ $wu->nama }} ({{ $wu->role }}) {{ $wu->warga?->no_rumah ? '- No. ' . $wu->warga->no_rumah : '' }} {{ $wu->hasRfidRegistered() ? '✓ [KTP: ' . $wu->rfid_uid . ']' : '[Belum Terdaftar]' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Info Box Target Warga Aktif -->
+                <div class="p-2 mb-3 rounded-2 text-center" style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2);">
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Target Warga Aktif</div>
+                    <div class="fw-bold text-primary fs-6" id="scanTargetUserDisplay">-</div>
+                    <div style="font-size: 12px; color: #475569;" id="scanTargetHouseDisplay">-</div>
+                </div>
+
+                <!-- Radar pulse animation -->
+                <div class="scan-radar-container my-3">
+                    <div class="scan-pulse"></div>
+                    <div class="scan-icon">💳</div>
+                </div>
+
+                <div class="text-center">
+                    <h6 class="fw-bold mt-2 mb-1" id="adminScanStatusHeading">Dekatkan e-KTP ke Sensor RFID / NFC</h6>
+                    <p class="text-muted mb-2" id="adminScanStatusSub" style="font-size: 13px;">
+                        Alat scanner ESP32 sedang mendengarkan tap kartu...
+                    </p>
+
+                    <div class="badge bg-primary-subtle text-primary px-3 py-2 fs-6 mb-3" id="adminScanTimerBadge">
+                        Sisa waktu: <span id="adminScanTimerCountdown">90</span> detik
+                    </div>
+
+                    <div id="adminScanResultSuccess" class="alert alert-success d-none mt-2 text-start" style="font-size: 13.5px;">
+                        <div class="d-flex align-items-center gap-2">
+                            <span style="font-size: 22px;">🎉</span>
+                            <div>
+                                <strong id="adminScanSuccessTitle">e-KTP Berhasil Didaftarkan!</strong>
+                                <div class="mt-1" id="adminScanSuccessDetail"></div>
+                                <div class="mt-1 font-monospace fw-bold" id="adminScanSuccessUid" style="color: #047857; font-size: 15px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="adminScanResultError" class="alert alert-danger d-none mt-2 text-start" style="font-size: 13px;">
+                        ⚠️ <span id="adminScanErrorMessage"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 justify-content-between">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="restartAdminScan()">
+                    🔄 Ulangi Scan
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal" onclick="stopAdminScanPolling()">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL 2: UJI TAP GERBANG (SIMULASI IOT)                                    -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="modalAdminSimulateTap" tabindex="-1" aria-labelledby="modalAdminSimulateTapLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size: 22px;">⚡</span>
+                    <h5 class="modal-title fw-bold" id="modalAdminSimulateTapLabel">Simulasi Uji Tap Gerbang (IoT Test)</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted" style="font-size: 13px;">
+                    Uji respon logika gerbang perumahan langsung dari browser tanpa perlu menyentuh perangkat ESP32 fisik.
+                </p>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size: 13px;">Pilih Akun Warga Terdaftar (Otomatis ambil UID):</label>
+                    <select id="simTargetUserSelect" class="form-select form-select-sm" onchange="onSimUserSelected()">
+                        <option value="">-- Ketik UID Manual / Pilih Warga Terdaftar --</option>
+                        @foreach ($wargaUsers as $wu)
+                            @if ($wu->hasRfidRegistered())
+                                <option value="{{ $wu->rfid_uid }}" data-nama="{{ $wu->nama }}" data-status="{{ $wu->rfid_is_active ? 'aktif' : 'blokir' }}">
+                                    {{ $wu->nama }} (Rumah: {{ $wu->warga?->no_rumah ?? '-' }}) - UID: {{ $wu->rfid_uid }} [{{ $wu->rfid_is_active ? 'AKTIF' : 'DIBLOKIR' }}]
+                                </option>
+                            @endif
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size: 13px;">Atau Masukkan UID KTP Uji Coba (Bisa Kartu Asing / Baru):</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" id="simUidInput" class="form-control font-monospace" placeholder="Contoh: 4A:2F:89:1B atau AA:BB:CC:99" value="4A:2F:89:1B">
+                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('simUidInput').value = 'FF:EE:DD:CC:99'">Kartu Asing</button>
+                    </div>
+                </div>
+
+                <!-- Simulation Output Box -->
+                <div id="simFeedbackBox" class="p-3 rounded-3 mt-3 d-none" style="border-left: 4px solid #3b82f6;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span id="simFeedbackIcon" style="font-size: 24px;"></span>
+                        <div>
+                            <strong id="simFeedbackTitle" style="font-size: 14px;"></strong>
+                            <div id="simFeedbackMsg" style="font-size: 12.5px;" class="mt-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-rt-outline" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn-rt-primary" onclick="submitSimulateTap()">
+                    ⚡ Jalankan Tap Simulasi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL 3: INPUT / EDIT MANUAL UID e-KTP                                    -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="modalRegisterWarga" tabindex="-1" aria-labelledby="modalRegisterWargaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="modalRegisterWargaLabel">➕ Daftarkan / Edit e-KTP Warga</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('ketua.iot_gate.register_warga') }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Pilih Warga / Pengguna</label>
+                        <select name="user_id" id="modalUserId" class="form-select" required>
+                            <option value="">-- Pilih Akun --</option>
+                            @foreach ($wargaUsers as $wu)
+                                <option value="{{ $wu->id }}" data-nama="{{ $wu->nama }}" data-rumah="{{ $wu->warga?->no_rumah ?? '-' }}">
+                                    {{ $wu->nama }} ({{ $wu->role }}) {{ $wu->warga?->no_rumah ? '- No. ' . $wu->warga->no_rumah : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">UID e-KTP (Hexadecimal)</label>
+                        <div class="input-group">
+                            <input type="text" name="rfid_uid" id="modalRfidUid" class="form-control font-monospace" placeholder="Contoh: 4A:2F:89:1B atau 045AB21A" required autocomplete="off">
+                            <button type="button" class="btn btn-outline-primary" onclick="scanFromRegisterModal()" title="Pindai langsung dari sensor ESP32">
+                                📡 Scan ESP32
+                            </button>
+                        </div>
+                        <div class="form-text" style="font-size: 12px;">Format UID otomatis disesuaikan menjadi huruf kapital hex. Anda dapat mengetik manual atau klik <b>Scan ESP32</b>.</div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold">Label Kartu</label>
+                        <input type="text" name="rfid_label" class="form-control" value="e-KTP" placeholder="e-KTP">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-rt-outline" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn-rt-primary">Simpan Hak Akses</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// =============================================================================
+// KONFIGURASI ROUTE & GLOBAL STATE
+// =============================================================================
+const START_SCAN_URL = "{{ route('ketua.iot_gate.start_scan') }}";
+const CHECK_SCAN_URL = "{{ route('ketua.iot_gate.check_scan') }}";
+const SIMULATE_TAP_URL = "{{ route('ketua.iot_gate.simulate_tap') }}";
+const LOGS_DATA_URL = "{{ route('ketua.iot_gate.logs_data') }}";
+const CSRF_TOKEN = "{{ csrf_token() }}";
+
+let adminScanInterval = null;
+let adminCountdownTimer = null;
+let currentTargetUserId = null;
+let currentTargetUserName = '';
+let currentTargetHouseNo = '';
+let isScanningActive = false;
+
+// =============================================================================
+// MODAL SCAN ESP32 CONTROLLER
+// =============================================================================
+function openAdminScanModal() {
+    const select = document.getElementById('adminScanTargetUserId');
+    if (select && select.options.length > 0) {
+        if (!currentTargetUserId) {
+            currentTargetUserId = select.options[0].value;
+            currentTargetUserName = select.options[0].dataset.nama || select.options[0].text;
+            currentTargetHouseNo = select.options[0].dataset.rumah || '-';
+        }
+    }
+    updateTargetDisplay();
+    const modalEl = document.getElementById('modalAdminScanEsp32');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+    startAdminScan(currentTargetUserId);
+}
+
+function openAdminScanForUser(userId, userName, houseNo) {
+    currentTargetUserId = userId;
+    currentTargetUserName = userName;
+    currentTargetHouseNo = houseNo;
+
+    const select = document.getElementById('adminScanTargetUserId');
+    if (select) {
+        select.value = userId;
+    }
+    updateTargetDisplay();
+
+    const modalEl = document.getElementById('modalAdminScanEsp32');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+    startAdminScan(userId);
+}
+
+function onScanTargetUserChanged() {
+    const select = document.getElementById('adminScanTargetUserId');
+    const selectedOption = select.options[select.selectedIndex];
+    if (selectedOption) {
+        currentTargetUserId = selectedOption.value;
+        currentTargetUserName = selectedOption.dataset.nama || selectedOption.text;
+        currentTargetHouseNo = selectedOption.dataset.rumah || '-';
+        updateTargetDisplay();
+        startAdminScan(currentTargetUserId);
+    }
+}
+
+function updateTargetDisplay() {
+    const nameEl = document.getElementById('scanTargetUserDisplay');
+    const houseEl = document.getElementById('scanTargetHouseDisplay');
+    if (nameEl) nameEl.innerText = currentTargetUserName || 'Warga Terpilih';
+    if (houseEl) houseEl.innerText = 'No. Rumah: ' + (currentTargetHouseNo || '-');
+}
+
+function startAdminScan(userId) {
+    stopAdminScanPolling();
+    resetScanModalUI();
+
+    fetch(START_SCAN_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": CSRF_TOKEN
+        },
+        body: JSON.stringify({ user_id: userId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            isScanningActive = true;
+            let seconds = data.remaining_seconds || 90;
+            const timerEl = document.getElementById('adminScanTimerCountdown');
+            if (timerEl) timerEl.innerText = seconds;
+
+            adminCountdownTimer = setInterval(() => {
+                seconds--;
+                if (timerEl) timerEl.innerText = Math.max(0, seconds);
+                if (seconds <= 0) {
+                    stopAdminScanPolling();
+                    showAdminScanError('Waktu tunggu scan habis (90 detik). Silakan klik Ulangi Scan.');
+                }
+            }, 1000);
+
+            pollAdminScanCheck(userId);
+        } else {
+            showAdminScanError(data.message || 'Gagal memulai sesi scan.');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        showAdminScanError('Gagal terhubung ke server RTEX.');
+    });
+}
+
+function pollAdminScanCheck(userId) {
+    adminScanInterval = setInterval(() => {
+        if (!isScanningActive) return;
+
+        fetch(`${CHECK_SCAN_URL}?user_id=${userId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'scanned') {
+                    stopAdminScanPolling();
+                    showAdminScanSuccess(data.uid, data.user_name || currentTargetUserName, data.message);
+                    
+                    // Auto-refresh data table & stats after 2 seconds
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2200);
+                } else if (data.status === 'expired') {
+                    stopAdminScanPolling();
+                    showAdminScanError('Sesi scan kedaluwarsa. Silakan klik Ulangi Scan.');
+                }
+            })
+            .catch(err => console.error("Poll scan error:", err));
+    }, 1500);
+}
+
+function stopAdminScanPolling() {
+    isScanningActive = false;
+    if (adminScanInterval) clearInterval(adminScanInterval);
+    if (adminCountdownTimer) clearInterval(adminCountdownTimer);
+}
+
+function restartAdminScan() {
+    if (currentTargetUserId) {
+        startAdminScan(currentTargetUserId);
+    } else {
+        openAdminScanModal();
+    }
+}
+
+function resetScanModalUI() {
+    document.getElementById('adminScanStatusHeading').innerText = 'Dekatkan e-KTP ke Sensor RFID / NFC';
+    document.getElementById('adminScanStatusSub').innerText = 'Alat scanner ESP32 sedang mendengarkan tap kartu...';
+    document.getElementById('adminScanResultSuccess').classList.add('d-none');
+    document.getElementById('adminScanResultError').classList.add('d-none');
+    document.getElementById('adminScanTimerBadge').classList.remove('d-none');
+}
+
+function showAdminScanSuccess(uid, userName, msg) {
+    document.getElementById('adminScanStatusHeading').innerText = '✅ Kartu Berhasil Terdeteksi!';
+    document.getElementById('adminScanStatusSub').innerText = 'e-KTP telah terhubung ke akun ' + userName + '.';
+    document.getElementById('adminScanTimerBadge').classList.add('d-none');
+    
+    document.getElementById('adminScanSuccessTitle').innerText = 'e-KTP Berhasil Didaftarkan!';
+    document.getElementById('adminScanSuccessDetail').innerText = 'Pemilik: ' + userName + ' (Rumah: ' + currentTargetHouseNo + ')';
+    document.getElementById('adminScanSuccessUid').innerText = 'UID: ' + uid;
+    document.getElementById('adminScanResultSuccess').classList.remove('d-none');
+}
+
+function showAdminScanError(msg) {
+    document.getElementById('adminScanErrorMessage').innerText = msg;
+    document.getElementById('adminScanResultError').classList.remove('d-none');
+}
+
+// =============================================================================
+// MODAL REGISTER WARGA & SCAN SHORTCUT
+// =============================================================================
+function setEditUserModal(userId, userName, currentUid) {
+    document.getElementById('modalUserId').value = userId;
+    document.getElementById('modalRfidUid').value = currentUid;
+    const modal = new bootstrap.Modal(document.getElementById('modalRegisterWarga'));
+    modal.show();
+}
+
+function scanFromRegisterModal() {
+    const userSelect = document.getElementById('modalUserId');
+    const selectedUserId = userSelect.value;
+    if (!selectedUserId) {
+        alert('Silakan pilih akun warga terlebih dahulu pada dropdown di atas.');
+        userSelect.focus();
+        return;
+    }
+
+    const selectedOption = userSelect.options[userSelect.selectedIndex];
+    const userName = selectedOption.dataset.nama || selectedOption.text;
+    const houseNo = selectedOption.dataset.rumah || '-';
+
+    // Tutup modal register warga
+    const regModalEl = document.getElementById('modalRegisterWarga');
+    const regModal = bootstrap.Modal.getInstance(regModalEl);
+    if (regModal) regModal.hide();
+
+    // Buka scan modal terarah ke warga tersebut
+    openAdminScanForUser(selectedUserId, userName, houseNo);
+}
+
+// =============================================================================
+// MODAL SIMULASI TAP GERBANG (SIMULATOR)
+// =============================================================================
+function onSimUserSelected() {
+    const select = document.getElementById('simTargetUserSelect');
+    const val = select.value;
+    if (val) {
+        document.getElementById('simUidInput').value = val;
+    }
+}
+
+function submitSimulateTap() {
+    const uid = document.getElementById('simUidInput').value.trim();
+    if (!uid) {
+        alert('Harap masukkan UID KTP atau pilih warga.');
+        return;
+    }
+
+    const box = document.getElementById('simFeedbackBox');
+    const icon = document.getElementById('simFeedbackIcon');
+    const title = document.getElementById('simFeedbackTitle');
+    const msg = document.getElementById('simFeedbackMsg');
+
+    box.classList.remove('d-none');
+    box.style.background = '#f8fafc';
+    box.style.borderLeftColor = '#3b82f6';
+    icon.innerText = '⏳';
+    title.innerText = 'Memproses Tap Kartu...';
+    title.style.color = '#1e293b';
+    msg.innerText = 'Mengirim UID ' + uid + ' ke backend verifikasi gerbang...';
+
+    fetch(SIMULATE_TAP_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": CSRF_TOKEN
+        },
+        body: JSON.stringify({ uid: uid })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.mode === 'registration' && data.success) {
+            box.style.background = 'rgba(16, 185, 129, 0.1)';
+            box.style.borderLeftColor = '#10b981';
+            icon.innerText = '🎉';
+            title.innerText = 'REGISTRASI BERHASIL!';
+            title.style.color = '#047857';
+            msg.innerText = data.message + ' UID: ' + uid;
+            setTimeout(() => window.location.reload(), 1800);
+        } else if (data.access === 'granted' || data.open_gate) {
+            box.style.background = 'rgba(16, 185, 129, 0.1)';
+            box.style.borderLeftColor = '#10b981';
+            icon.innerText = '🟢';
+            title.innerText = 'AKSES DITERIMA (PORTAL TERBUKA)';
+            title.style.color = '#047857';
+            msg.innerText = (data.message || 'Akses Diterima') + ' (Palang gerbang terbuka otomatis)';
+            fetchLatestLogs(false);
+        } else {
+            box.style.background = 'rgba(239, 68, 68, 0.1)';
+            box.style.borderLeftColor = '#ef4444';
+            icon.innerText = '🔴';
+            title.innerText = 'AKSES DITOLAK (PORTAL TERKUNCI)';
+            title.style.color = '#b91c1c';
+            msg.innerText = data.message || 'KTP tidak terdaftar atau dinonaktifkan.';
+            fetchLatestLogs(false);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        box.style.background = 'rgba(239, 68, 68, 0.1)';
+        icon.innerText = '⚠️';
+        title.innerText = 'Gagal Menguji Tap';
+        msg.innerText = 'Terjadi kesalahan sistem saat menghubungi simulator.';
+    });
+}
+
+// =============================================================================
+// AUTO-REFRESH LOGS DI TAB 1
+// =============================================================================
+function fetchLatestLogs(notifyUser) {
+    fetch(LOGS_DATA_URL)
+        .then(r => r.json())
+        .then(data => {
+            if (data.logs && data.logs.length > 0) {
+                const tbody = document.getElementById('logsTableBody');
+                if (tbody) {
+                    let html = '';
+                    data.logs.forEach(log => {
+                        const isGranted = log.access_status === 'granted';
+                        const badgeStatus = isGranted 
+                            ? '<span class="badge bg-success-subtle text-success border border-success-subtle">✓ Diterima</span>'
+                            : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle">✗ Ditolak</span>';
+                        
+                        let portalAction = '<span class="text-muted">🔒 Terkunci</span>';
+                        if (log.gate_action === 'OPEN_GATE') {
+                            portalAction = '<span class="text-success fw-semibold">🟢 Portal Terbuka</span>';
+                        } else if (log.gate_action === 'MANUAL_OPEN') {
+                            portalAction = '<span class="text-warning fw-semibold">🟡 Buka Manual</span>';
+                        }
+
+                        html += `<tr>
+                            <td>${log.tapped_at}</td>
+                            <td><strong>${log.warga_nama}</strong></td>
+                            <td><span class="badge bg-light text-dark border">${log.no_rumah}</span></td>
+                            <td><code class="font-monospace fw-semibold">${log.rfid_uid}</code></td>
+                            <td>${badgeStatus}</td>
+                            <td>${portalAction}</td>
+                            <td class="text-muted" style="max-width: 250px;">${log.denial_reason || 'Verifikasi e-KTP Valid'}</td>
+                        </tr>`;
+                    });
+                    tbody.innerHTML = html;
+                }
+            }
+
+            // Update stats
+            if (data.today_total !== undefined) document.getElementById('statTodayTotal').innerText = data.today_total;
+            if (data.today_granted !== undefined) document.getElementById('statTodayGranted').innerText = data.today_granted;
+            if (data.today_denied !== undefined) document.getElementById('statTodayDenied').innerText = data.today_denied;
+
+            if (notifyUser) {
+                const badge = document.getElementById('logAutoRefreshStatus');
+                if (badge) {
+                    badge.innerText = '✓ Diperbarui barusan';
+                    setTimeout(() => { badge.innerText = '● Auto-update aktif'; }, 2000);
+                }
+            }
+        })
+        .catch(err => console.error("Error refreshing logs:", err));
+}
+
+// Background poller for logs every 8 seconds
+setInterval(() => {
+    fetchLatestLogs(false);
+}, 8000);
+</script>
 @endsection

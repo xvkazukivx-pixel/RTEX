@@ -106,6 +106,9 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::post('/iot-gate/manual-open', [IotGateController::class, 'adminManualOpen'])->name('iot_gate.manual_open');
     Route::get('/iot-gate/logs-data', [IotGateController::class, 'adminLogsData'])->name('iot_gate.logs_data');
     Route::get('/iot-gate/firmware', [IotGateController::class, 'downloadFirmware'])->name('iot_gate.firmware');
+    Route::post('/iot-gate/start-scan', [IotGateController::class, 'startScan'])->name('iot_gate.start_scan');
+    Route::get('/iot-gate/check-scan', [IotGateController::class, 'checkScan'])->name('iot_gate.check_scan');
+    Route::post('/iot-gate/simulate-tap', [IotGateController::class, 'simulateTap'])->name('iot_gate.simulate_tap');
 });
 
 // Modul Eksekutif, Pengesahan & Pengawasan (RT, RW, Bendahara RW, Sekretaris RW)
@@ -128,6 +131,14 @@ Route::middleware(['auth', 'role:rt,rw,bendahara_rw,sekretaris_rw'])->prefix('ke
     // Monitoring Portal IoT Gerbang RT/RW
     Route::get('/iot-gate', [IotGateController::class, 'adminIndex'])->name('iot_gate');
     Route::post('/iot-gate/manual-open', [IotGateController::class, 'adminManualOpen'])->name('iot_gate.manual_open');
+    Route::post('/iot-gate/start-scan', [IotGateController::class, 'startScan'])->name('iot_gate.start_scan');
+    Route::get('/iot-gate/check-scan', [IotGateController::class, 'checkScan'])->name('iot_gate.check_scan');
+    Route::post('/iot-gate/simulate-tap', [IotGateController::class, 'simulateTap'])->name('iot_gate.simulate_tap');
+    Route::post('/iot-gate/register-warga', [IotGateController::class, 'adminRegisterWarga'])->name('iot_gate.register_warga');
+    Route::post('/iot-gate/toggle/{user}', [IotGateController::class, 'adminToggleStatus'])->name('iot_gate.toggle_status');
+    Route::delete('/iot-gate/remove/{user}', [IotGateController::class, 'adminRemoveUserRfid'])->name('iot_gate.remove_user');
+    Route::get('/iot-gate/logs-data', [IotGateController::class, 'adminLogsData'])->name('iot_gate.logs_data');
+    Route::get('/iot-gate/firmware', [IotGateController::class, 'downloadFirmware'])->name('iot_gate.firmware');
 });
 
 // Modul Warga

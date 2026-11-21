@@ -246,18 +246,18 @@ class IotGateController extends Controller
 
     /**
      * Memulai sesi scan KTP via ESP32 dari web
-     * POST /warga/rfid/start-scan
+     * POST /warga/rfid/start-scan atau /admin/iot-gate/start-scan
      */
     public function startScan(Request $request): JsonResponse
     {
         $userId = $request->input('user_id', auth()->id());
 
         // Jika user lain ditentukan, pastikan pemanggil adalah admin/pengurus
-        if ($userId != auth()->id() && !in_array(auth()->user()->role, ['super_admin', 'sekretaris_rt', 'rt', 'ketua', 'rw'])) {
+        if ($userId != auth()->id() && !in_array(auth()->user()->role, ['super_admin', 'sekretaris_rt', 'rt', 'ketua', 'rw', 'bendahara_rt', 'bendahara_rw', 'sekretaris_rw'])) {
             return response()->json(['success' => false, 'message' => 'Tidak memiliki izin.'], 403);
         }
 
-        // Batalkan sesi sebelumnya yang masih menggantung
+        // Batalkan sesi sebelumnya yang masih menggantung untuk user ini
         RfidScanSession::where('user_id', $userId)
             ->where('status', 'waiting')
             ->update(['status' => 'expired']);
@@ -270,22 +270,33 @@ class IotGateController extends Controller
             'expires_at' => Carbon::now()->addSeconds(90),
         ]);
 
+        $targetUser = User::with('warga')->find($userId);
+
         return response()->json([
             'success' => true,
             'session_id' => $session->id,
+            'target_user' => [
+                'id' => $targetUser?->id,
+                'nama' => $targetUser?->nama,
+                'no_rumah' => $targetUser?->warga?->no_rumah ?? '-',
+            ],
             'expires_at' => $session->expires_at->toIso8601String(),
             'remaining_seconds' => 90,
-            'message' => 'Silakan tempelkan e-KTP Anda pada alat scanner ESP32 sekarang.',
+            'message' => 'Silakan tempelkan e-KTP pada alat scanner ESP32 sekarang.',
         ]);
     }
 
     /**
      * Polling AJAX untuk mengecek apakah e-KTP sudah berhasil di-scan oleh ESP32
-     * GET /warga/rfid/check-scan
+     * GET /warga/rfid/check-scan atau /admin/iot-gate/check-scan
      */
     public function checkScan(Request $request): JsonResponse
     {
         $userId = $request->input('user_id', auth()->id());
+
+        if ($userId != auth()->id() && !in_array(auth()->user()->role, ['super_admin', 'sekretaris_rt', 'rt', 'ketua', 'rw', 'bendahara_rt', 'bendahara_rw', 'sekretaris_rw'])) {
+            return response()->json(['status' => 'unauthorized'], 403);
+        }
 
         $session = RfidScanSession::where('user_id', $userId)
             ->latest()
@@ -297,13 +308,15 @@ class IotGateController extends Controller
 
         if ($session->status === 'scanned') {
             $session->update(['status' => 'completed']);
-            $user = User::find($userId);
+            $user = User::with('warga')->find($userId);
 
             return response()->json([
                 'status' => 'scanned',
                 'uid' => $session->scanned_uid,
-                'user_name' => $user->nama,
-                'message' => 'e-KTP berhasil dideteksi dan tersimpan ke akun Anda!',
+                'user_name' => $user?->nama ?? 'Warga',
+                'user_id' => $user?->id,
+                'no_rumah' => $user?->warga?->no_rumah ?? '-',
+                'message' => 'e-KTP berhasil dideteksi dan tersimpan ke akun ' . ($user?->nama ?? 'Warga') . '!',
             ]);
         }
 
