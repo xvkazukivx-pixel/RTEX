@@ -27,7 +27,7 @@ class KetuaController extends Controller
         $periodeList = [];
         $dataTren = [];
         for ($i = 5; $i >= 0; $i--) {
-            $p = date('Y-m', strtotime("-$i months"));
+            $p = now()->startOfMonth()->subMonths($i)->format('Y-m');
             $periodeList[] = $p;
             $dataTren[$p] = Transaksi::where('status_konfirmasi', 'Diterima')
                 ->whereHas('tagihan', fn ($q) => $q->where('periode', $p))
@@ -66,7 +66,8 @@ class KetuaController extends Controller
     {
         $filterTunggakan = $request->query('tunggakan') === '3';
 
-        $query = Warga::withCount(['tagihan as jumlah_tunggakan' => fn ($q) => $q->where('status', '!=', 'Lunas')]);
+        $query = Warga::whereNull('kepala_keluarga_id')
+            ->withCount(['tagihan as jumlah_tunggakan' => fn ($q) => $q->where('status', '!=', 'Lunas')]);
 
         if ($filterTunggakan) {
             $query->having('jumlah_tunggakan', '>', 3);
@@ -136,7 +137,10 @@ class KetuaController extends Controller
 
     public function validasiLaporan(Request $request)
     {
-        $periode = $request->input('periode');
+        $validated = $request->validate([
+            'periode' => ['required', 'string', 'regex:/^\d{4}-\d{2}$/'],
+        ]);
+        $periode = $validated['periode'];
 
         LaporanValidasi::updateOrCreate(
             ['periode' => $periode],

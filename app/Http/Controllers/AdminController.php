@@ -43,7 +43,7 @@ class AdminController extends Controller
         $periodeGrafik = [];
         $kasGrafik = [];
         for ($i = 5; $i >= 0; $i--) {
-            $periodeItem = date('Y-m', strtotime("-$i months"));
+            $periodeItem = now()->startOfMonth()->subMonths($i)->format('Y-m');
             $periodeGrafik[] = periode_label($periodeItem);
             $kasGrafik[] = (float) Transaksi::where('status_konfirmasi', 'Diterima')
                 ->whereHas('tagihan', fn ($query) => $query->where('periode', $periodeItem))
@@ -52,7 +52,7 @@ class AdminController extends Controller
 
         $grafikKepatuhan = [];
         for ($i = 5; $i >= 0; $i--) {
-            $periodeItem = date('Y-m', strtotime("-$i months"));
+            $periodeItem = now()->startOfMonth()->subMonths($i)->format('Y-m');
             $total = Tagihan::where('periode', $periodeItem)->count();
             $lunas = Tagihan::where('periode', $periodeItem)->where('status', 'Lunas')->count();
             $grafikKepatuhan[] = [
@@ -101,20 +101,23 @@ class AdminController extends Controller
         $wargaAktif = Warga::where('status_aktif', true)
             ->whereNull('kepala_keluarga_id')
             ->get();
-        $dibuat = 0;
-
-        foreach ($wargaAktif as $w) {
-            $ada = Tagihan::where('warga_id', $w->id)->where('periode', $periode)->exists();
-            if (! $ada) {
-                Tagihan::create([
-                    'warga_id' => $w->id,
-                    'periode' => $periode,
-                    'total_tagihan' => $totalIuran,
-                    'status' => 'Belum Bayar',
-                ]);
-                $dibuat++;
+        $dibuat = DB::transaction(function () use ($wargaAktif, $periode, $totalIuran) {
+            $count = 0;
+            foreach ($wargaAktif as $w) {
+                $ada = Tagihan::where('warga_id', $w->id)->where('periode', $periode)->exists();
+                if (! $ada) {
+                    Tagihan::create([
+                        'warga_id' => $w->id,
+                        'periode' => $periode,
+                        'total_tagihan' => $totalIuran,
+                        'status' => 'Belum Bayar',
+                    ]);
+                    $count++;
+                }
             }
-        }
+
+            return $count;
+        });
 
         return back()->with('success', $dibuat > 0
             ? "Berhasil membuat $dibuat tagihan baru untuk periode ".periode_label($periode).'.'
@@ -621,7 +624,7 @@ class AdminController extends Controller
         $pemasukanGrafik = [];
         $kepatuhanGrafik = [];
         for ($i = 5; $i >= 0; $i--) {
-            $periodeItem = date('Y-m', strtotime("-$i months"));
+            $periodeItem = now()->startOfMonth()->subMonths($i)->format('Y-m');
             $periodeGrafik[] = periode_label($periodeItem);
             $pemasukanGrafik[] = (float) Transaksi::where('status_konfirmasi', 'Diterima')
                 ->whereHas('tagihan', fn ($query) => $query->where('periode', $periodeItem))

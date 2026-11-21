@@ -14,7 +14,7 @@ class SuratController extends Controller
         abort_unless($surat->status === PengajuanSurat::STATUS_DISETUJUI, 404);
 
         $user = auth()->user();
-        if ($user->isWarga() && (int) $surat->warga_id !== (int) $user->warga_id) {
+        if ($user->isWarga() && (! $surat->warga_id || ! $user->warga_id || (int) $surat->warga_id !== (int) $user->warga_id)) {
             abort(403, 'Anda tidak memiliki hak akses untuk mencetak surat ini.');
         }
 

@@ -276,6 +276,24 @@ class AdminSuratManagementTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_unlinked_warga_cannot_print_an_approved_guest_letter(): void
+    {
+        $surat = $this->createManualApplicant([
+            'status' => PengajuanSurat::STATUS_DISETUJUI,
+        ]);
+        $unlinkedWarga = User::create([
+            'nama' => 'Warga Tanpa Data',
+            'username' => 'wargatanpadata',
+            'password' => 'password123',
+            'role' => 'warga',
+            'warga_id' => null,
+        ]);
+
+        $this->actingAs($unlinkedWarga)
+            ->get(route('surat.cetak', $surat))
+            ->assertForbidden();
+    }
+
     /**
      * @return array<string, string|null>
      */
