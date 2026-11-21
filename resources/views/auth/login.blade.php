@@ -58,9 +58,6 @@
                 </div>
                 <button type="submit" class="btn-rt-primary w-100" style="padding:11px;">Masuk</button>
             </form>
-            <div class="text-center mt-4" style="font-size:12px; color:var(--color-text-muted);">
-                Akun demo: <b>superadmin</b>/super123 · <b>admin</b>/admin123 · <b>ketua</b>/ketua123 · <b>rw</b>/rw123 · <b>hafis</b>/warga123
-            </div>
         </div>
 
         <!-- PANEL DAFTAR AKUN (WARGA) -->
