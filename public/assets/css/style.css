@@ -5,18 +5,18 @@
    ========================================================= */
 
 :root {
-    --color-bg: #F5F7F4;
+    --color-bg: #F4F8FC;
     --color-surface: #FFFFFF;
-    --color-primary: #1F5D4E;
-    --color-primary-dark: #143C32;
-    --color-primary-light: #E7F0EC;
-    --color-accent: #D9A441;
-    --color-accent-dark: #B9852B;
-    --color-text: #1C2422;
-    --color-text-muted: #64756E;
-    --color-border: #E2E6E1;
+    --color-primary: #247CBB;
+    --color-primary-dark: #173452;
+    --color-primary-light: #EBF4FC;
+    --color-accent: #2A9DDB;
+    --color-accent-dark: #1E78AA;
+    --color-text: #173452;
+    --color-text-muted: #64829E;
+    --color-border: #DCE8F2;
     --color-danger: #C0524B;
-    --color-success: #2E8B57;
+    --color-success: #20A47B;
     --color-warning: #D9A441;
 
     --font-display: 'Sora', 'Segoe UI', sans-serif;
@@ -48,14 +48,17 @@ a { color: var(--color-primary); text-decoration: none; }
 .sidebar {
     width: 260px;
     flex-shrink: 0;
-    background: var(--color-primary-dark);
-    color: #EDF3F0;
+    color: #173452;
+    background:
+        radial-gradient(ellipse at 10% 0%, rgba(87, 206, 255, 0.3), transparent 38%),
+        linear-gradient(180deg, #f1fbff 0%, #e8f4ff 52%, #e4efff 100%);
     display: flex;
     flex-direction: column;
     position: sticky;
     top: 0;
     height: 100vh;
     overflow-y: auto;
+    border-right: 1px solid rgba(38, 116, 179, 0.12);
 }
 
 .sidebar-brand {
@@ -63,16 +66,18 @@ a { color: var(--color-primary); text-decoration: none; }
     align-items: center;
     gap: 12px;
     padding: 22px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    min-height: 92px;
+    border-bottom: 1px solid rgba(38, 116, 179, 0.12);
 }
 
 .brand-seal {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 8px;
     object-fit: contain;
     background: #fff;
     flex-shrink: 0;
+    box-shadow: 0 6px 16px rgba(44, 142, 223, 0.25);
 }
 
 .brand-text {
@@ -80,7 +85,7 @@ a { color: var(--color-primary); text-decoration: none; }
     font-weight: 600;
     font-size: 15px;
     line-height: 1.25;
-    color: #fff;
+    color: #173452;
 }
 
 .brand-text small {
@@ -88,7 +93,7 @@ a { color: var(--color-primary); text-decoration: none; }
     font-family: var(--font-body);
     font-weight: 400;
     font-size: 11px;
-    color: rgba(237,243,240,0.6);
+    color: #63819d;
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
@@ -110,23 +115,25 @@ a { color: var(--color-primary); text-decoration: none; }
     display: flex;
     align-items: center;
     gap: 10px;
-    color: rgba(237,243,240,0.82);
+    color: #46627d;
     padding: 10px 12px;
-    border-radius: 8px;
+    border-radius: 7px;
     font-size: 14px;
+    min-height: 38px;
     margin-bottom: 2px;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
 .sidebar-nav a:hover {
-    background: rgba(255,255,255,0.06);
-    color: #fff;
+    background: rgba(55, 169, 231, 0.1);
+    color: #1768b5;
 }
 
 .sidebar-nav a.active {
-    background: var(--color-accent);
-    color: #21301A;
+    background: linear-gradient(100deg, #249fe2, #4777f5);
+    color: #fff;
     font-weight: 600;
+    box-shadow: 0 5px 14px rgba(53, 128, 222, 0.22);
 }
 
 .sidebar-nav .nav-icon {
@@ -314,23 +321,25 @@ div.card-rt.stat-blue { background: #397ca9; }
 /* ---------- Cards ---------- */
 .card-rt {
     background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
+    border: 1px solid rgba(71, 146, 202, 0.16);
+    border-radius: 14px;
     padding: 20px;
+    box-shadow: 0 4px 16px rgba(44, 112, 178, 0.04);
 }
 
 .stat-card {
     background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-top: 3px solid var(--color-primary);
-    border-radius: 12px;
+    border: 1px solid rgba(71, 146, 202, 0.16);
+    border-top: 3px solid #247CBB;
+    border-radius: 14px;
     padding: 18px 20px;
     height: 100%;
+    box-shadow: 0 4px 16px rgba(44, 112, 178, 0.05);
 }
 
-.stat-card.accent { border-top-color: var(--color-accent); }
-.stat-card.warn { border-top-color: var(--color-warning); }
-.stat-card.danger { border-top-color: var(--color-danger); }
+.stat-card.accent { border-top-color: #2A9DDB; }
+.stat-card.warn { border-top-color: #f39c12; }
+.stat-card.danger { border-top-color: #e74c3c; }
 
 .stat-label {
     font-size: 12px;
@@ -356,11 +365,13 @@ div.card-rt.stat-blue { background: #397ca9; }
     display: flex;
     align-items: center;
     gap: 8px;
+    color: #173452;
 }
 
 .section-title .dot {
     width: 8px; height: 8px; border-radius: 50%;
-    background: var(--color-accent); display: inline-block;
+    background: linear-gradient(135deg, #249fe2, #4777f5); display: inline-block;
+    box-shadow: 0 2px 6px rgba(36, 159, 226, 0.4);
 }
 
 /* ---------- Tables ---------- */
@@ -405,29 +416,46 @@ div.card-rt.stat-blue { background: #397ca9; }
 
 /* ---------- Buttons ---------- */
 .btn-rt-primary {
-    background: var(--color-primary);
-    border: 1px solid var(--color-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: linear-gradient(100deg, #249fe2, #4777f5);
+    border: none;
     color: #fff;
     font-weight: 600;
     font-size: 13.5px;
     padding: 8px 18px;
     border-radius: 8px;
-    transition: background 0.15s ease;
+    box-shadow: 0 4px 14px rgba(45, 126, 219, 0.25);
+    transition: transform 0.1s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
-.btn-rt-primary:hover { background: var(--color-primary-dark); color: #fff; }
+.btn-rt-primary:hover {
+    background: linear-gradient(100deg, #1689cc, #3867e8);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(45, 126, 219, 0.35);
+}
 
 .btn-rt-accent {
-    background: var(--color-accent);
-    border: 1px solid var(--color-accent);
-    color: #21301A;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: linear-gradient(100deg, #21b7dc, #4777f5);
+    border: none;
+    color: #fff;
     font-weight: 600;
     font-size: 13.5px;
     padding: 8px 18px;
     border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(33, 183, 220, 0.25);
 }
 
-.btn-rt-accent:hover { background: var(--color-accent-dark); color: #21301A; }
+.btn-rt-accent:hover {
+    background: linear-gradient(100deg, #159ec4, #3867e8);
+    color: #fff;
+}
 
 .btn-rt-outline {
     background: transparent;
@@ -1841,7 +1869,8 @@ body.role-bendahara .sidebar,
 body.role-admin .sidebar,
 body.role-rt .sidebar,
 body.role-ketua .sidebar,
-body.role-rw .sidebar {
+body.role-rw .sidebar,
+body.role-warga .sidebar {
     color: #173452;
     background:
         radial-gradient(ellipse at 10% 0%, rgba(87, 206, 255, 0.3), transparent 38%),
@@ -1853,7 +1882,8 @@ body.role-bendahara .sidebar-brand,
 body.role-admin .sidebar-brand,
 body.role-rt .sidebar-brand,
 body.role-ketua .sidebar-brand,
-body.role-rw .sidebar-brand {
+body.role-rw .sidebar-brand,
+body.role-warga .sidebar-brand {
     min-height: 92px;
     border-bottom: 1px solid rgba(38, 116, 179, 0.12);
 }
@@ -1863,7 +1893,8 @@ body.role-bendahara .brand-text,
 body.role-admin .brand-text,
 body.role-rt .brand-text,
 body.role-ketua .brand-text,
-body.role-rw .brand-text {
+body.role-rw .brand-text,
+body.role-warga .brand-text {
     color: #173452;
 }
 
@@ -1872,7 +1903,8 @@ body.role-bendahara .brand-text small,
 body.role-admin .brand-text small,
 body.role-rt .brand-text small,
 body.role-ketua .brand-text small,
-body.role-rw .brand-text small {
+body.role-rw .brand-text small,
+body.role-warga .brand-text small {
     color: #63819d;
 }
 
@@ -1881,7 +1913,8 @@ body.role-bendahara .brand-seal,
 body.role-admin .brand-seal,
 body.role-rt .brand-seal,
 body.role-ketua .brand-seal,
-body.role-rw .brand-seal {
+body.role-rw .brand-seal,
+body.role-warga .brand-seal {
     width: 44px;
     height: 44px;
     border: 0;
@@ -1947,7 +1980,8 @@ body.role-bendahara .sidebar-nav,
 body.role-admin .sidebar-nav,
 body.role-rt .sidebar-nav,
 body.role-ketua .sidebar-nav,
-body.role-rw .sidebar-nav {
+body.role-rw .sidebar-nav,
+body.role-warga .sidebar-nav {
     padding-top: 0;
 }
 
@@ -1956,7 +1990,8 @@ body.role-bendahara .sidebar-nav a,
 body.role-admin .sidebar-nav a,
 body.role-rt .sidebar-nav a,
 body.role-ketua .sidebar-nav a,
-body.role-rw .sidebar-nav a {
+body.role-rw .sidebar-nav a,
+body.role-warga .sidebar-nav a {
     min-height: 38px;
     border-radius: 7px;
     color: #46627d;
@@ -1967,7 +2002,8 @@ body.role-bendahara .sidebar-nav a:hover,
 body.role-admin .sidebar-nav a:hover,
 body.role-rt .sidebar-nav a:hover,
 body.role-ketua .sidebar-nav a:hover,
-body.role-rw .sidebar-nav a:hover {
+body.role-rw .sidebar-nav a:hover,
+body.role-warga .sidebar-nav a:hover {
     background: rgba(55, 169, 231, 0.1);
     color: #1768b5;
 }
@@ -1977,7 +2013,8 @@ body.role-bendahara .sidebar-nav a.active,
 body.role-admin .sidebar-nav a.active,
 body.role-rt .sidebar-nav a.active,
 body.role-ketua .sidebar-nav a.active,
-body.role-rw .sidebar-nav a.active {
+body.role-rw .sidebar-nav a.active,
+body.role-warga .sidebar-nav a.active {
     background: linear-gradient(100deg, #249fe2, #4777f5);
     color: #fff;
     box-shadow: 0 5px 14px rgba(53, 128, 222, 0.22);
@@ -1988,7 +2025,8 @@ body.role-bendahara .sidebar-foot,
 body.role-admin .sidebar-foot,
 body.role-rt .sidebar-foot,
 body.role-ketua .sidebar-foot,
-body.role-rw .sidebar-foot {
+body.role-rw .sidebar-foot,
+body.role-warga .sidebar-foot {
     border-top-color: rgba(38, 116, 179, 0.12);
 }
 
@@ -1997,7 +2035,8 @@ body.role-bendahara .sidebar-foot .user-name,
 body.role-admin .sidebar-foot .user-name,
 body.role-rt .sidebar-foot .user-name,
 body.role-ketua .sidebar-foot .user-name,
-body.role-rw .sidebar-foot .user-name {
+body.role-rw .sidebar-foot .user-name,
+body.role-warga .sidebar-foot .user-name {
     color: #173452;
 }
 
@@ -2006,7 +2045,8 @@ body.role-bendahara .btn-logout,
 body.role-admin .btn-logout,
 body.role-rt .btn-logout,
 body.role-ketua .btn-logout,
-body.role-rw .btn-logout {
+body.role-rw .btn-logout,
+body.role-warga .btn-logout {
     border-color: rgba(54, 117, 170, 0.2);
 }
 
@@ -2015,7 +2055,8 @@ body.role-rw .btn-logout {
 .role-admin .topbar,
 .role-rt .topbar,
 .role-ketua .topbar,
-.role-rw .topbar {
+.role-rw .topbar,
+.role-warga .topbar {
     min-height: 52px;
     padding-bottom: 12px;
     border-bottom: 1px solid #edf0ec;
