@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\IotGateController;
 use App\Http\Controllers\KetuaController;
 use App\Http\Controllers\SuratController;
 use App\Http\Controllers\WargaController;
@@ -82,7 +83,7 @@ Route::middleware(['auth', 'role:super_admin,sekretaris_rt'])->prefix('admin')->
     Route::post('/kegiatan/selesai/{id}', [AdminController::class, 'kegiatanSelesai'])->name('kegiatan.selesai');
 });
 
-// Modul Khusus Super Admin (Konfigurasi Akun, Persetujuan Warga Baru, Bank Sampah)
+// Modul Khusus Super Admin (Konfigurasi Akun, Persetujuan Warga Baru, Bank Sampah, Monitoring Portal IoT)
 Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/persetujuan', [AdminController::class, 'persetujuan'])->name('persetujuan');
     Route::post('/persetujuan/{id}', [AdminController::class, 'persetujuanAction'])->name('persetujuan.action');
@@ -96,6 +97,15 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::post('/bank-sampah/setoran/store', [AdminController::class, 'bankSampahSetoranStore'])->name('bank_sampah.setoran.store');
     Route::post('/bank-sampah/jenis/store', [AdminController::class, 'bankSampahJenisStore'])->name('bank_sampah.jenis.store');
     Route::post('/bank-sampah/setoran/{id}', [AdminController::class, 'bankSampahSetoranAction'])->name('bank_sampah.setoran.action');
+
+    // Modul Monitoring Portal IoT & KTP RFID
+    Route::get('/iot-gate', [IotGateController::class, 'adminIndex'])->name('iot_gate');
+    Route::post('/iot-gate/register-warga', [IotGateController::class, 'adminRegisterWarga'])->name('iot_gate.register_warga');
+    Route::post('/iot-gate/toggle-status/{user}', [IotGateController::class, 'adminToggleStatus'])->name('iot_gate.toggle_status');
+    Route::delete('/iot-gate/remove-user/{user}', [IotGateController::class, 'adminRemoveUserRfid'])->name('iot_gate.remove_user');
+    Route::post('/iot-gate/manual-open', [IotGateController::class, 'adminManualOpen'])->name('iot_gate.manual_open');
+    Route::get('/iot-gate/logs-data', [IotGateController::class, 'adminLogsData'])->name('iot_gate.logs_data');
+    Route::get('/iot-gate/firmware', [IotGateController::class, 'downloadFirmware'])->name('iot_gate.firmware');
 });
 
 // Modul Eksekutif, Pengesahan & Pengawasan (RT, RW, Bendahara RW, Sekretaris RW)
@@ -114,6 +124,10 @@ Route::middleware(['auth', 'role:rt,rw,bendahara_rw,sekretaris_rw'])->prefix('ke
 
     Route::get('/bank-sampah', [KetuaController::class, 'bankSampah'])->name('bank_sampah');
     Route::get('/posyandu', [KetuaController::class, 'posyandu'])->name('posyandu');
+
+    // Monitoring Portal IoT Gerbang RT/RW
+    Route::get('/iot-gate', [IotGateController::class, 'adminIndex'])->name('iot_gate');
+    Route::post('/iot-gate/manual-open', [IotGateController::class, 'adminManualOpen'])->name('iot_gate.manual_open');
 });
 
 // Modul Warga
@@ -144,4 +158,12 @@ Route::middleware(['auth', 'role:warga'])->prefix('warga')->name('warga.')->grou
     Route::get('/informasi', [WargaController::class, 'informasi'])->name('informasi');
     Route::post('/kegiatan/{id}/daftar', [WargaController::class, 'kegiatanDaftar'])->name('kegiatan.daftar');
     Route::post('/kegiatan/{id}/batal', [WargaController::class, 'kegiatanBatal'])->name('kegiatan.batal');
+
+    // Akses Portal & Pendaftaran KTP Mandiri
+    Route::get('/rfid', [IotGateController::class, 'wargaIndex'])->name('rfid');
+    Route::post('/rfid/start-scan', [IotGateController::class, 'startScan'])->name('rfid.start_scan');
+    Route::get('/rfid/check-scan', [IotGateController::class, 'checkScan'])->name('rfid.check_scan');
+    Route::post('/rfid/register-manual', [IotGateController::class, 'registerManual'])->name('rfid.register_manual');
+    Route::delete('/rfid/remove', [IotGateController::class, 'removeRfid'])->name('rfid.remove');
+    Route::post('/rfid/simulate-tap', [IotGateController::class, 'simulateTap'])->name('rfid.simulate_tap');
 });

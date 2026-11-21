@@ -24,6 +24,7 @@
             ['route' => 'admin.konfirmasi',  'icon' => '✅', 'label' => 'Konfirmasi Pembayaran'],
             ['route' => 'admin.laporan',     'icon' => '📊', 'label' => 'Laporan Keuangan'],
             ['route' => 'admin.users',       'icon' => '🔑', 'label' => 'Kelola Akun'],
+            ['route' => 'admin.iot_gate',    'icon' => '🚪', 'label' => 'Monitoring Portal IoT'],
             ['route' => 'admin.bank_sampah', 'icon' => '♻️', 'label' => 'Bank Sampah'],
             ['route' => 'admin.pengaduan',   'icon' => '💬', 'label' => 'Pengaduan'],
             ['route' => 'admin.posyandu',    'icon' => '🍼', 'label' => 'Posyandu'],
@@ -72,6 +73,7 @@
             ['route' => 'ketua.rekap',       'icon' => '📊', 'label' => 'Rekap Kas RT'],
             ['route' => 'ketua.bank_sampah', 'icon' => '♻️', 'label' => 'Rekap Bank Sampah'],
             ['route' => 'ketua.posyandu',    'icon' => '🍼', 'label' => 'Rekap Posyandu'],
+            ['route' => 'ketua.iot_gate',    'icon' => '🚪', 'label' => 'Portal Gerbang IoT'],
         ],
         'ketua' => [
             ['route' => 'ketua.dashboard',   'icon' => '🏠', 'label' => 'Dashboard RT'],
@@ -82,6 +84,7 @@
             ['route' => 'ketua.rekap',       'icon' => '📊', 'label' => 'Rekap Kas RT'],
             ['route' => 'ketua.bank_sampah', 'icon' => '♻️', 'label' => 'Rekap Bank Sampah'],
             ['route' => 'ketua.posyandu',    'icon' => '🍼', 'label' => 'Rekap Posyandu'],
+            ['route' => 'ketua.iot_gate',    'icon' => '🚪', 'label' => 'Portal Gerbang IoT'],
         ],
         'rw' => [
             ['route' => 'ketua.dashboard',   'icon' => '🏠', 'label' => 'Dashboard RW'],
@@ -90,6 +93,7 @@
             ['route' => 'ketua.laporan',     'icon' => '📄', 'label' => 'Validasi Laporan RW'],
             ['route' => 'ketua.monitoring',  'icon' => '👥', 'label' => 'Monitoring Warga RW'],
             ['route' => 'ketua.rekap',       'icon' => '📊', 'label' => 'Rekap Kas RW'],
+            ['route' => 'ketua.iot_gate',    'icon' => '🚪', 'label' => 'Portal Gerbang IoT'],
         ],
         'bendahara_rw' => [
             ['route' => 'ketua.dashboard',   'icon' => '🏠', 'label' => 'Dashboard Kas RW'],
@@ -104,6 +108,7 @@
         ],
         'warga' => [
             ['route' => 'warga.dashboard',   'icon' => '🏠', 'label' => 'Dashboard Saya'],
+            ['route' => 'warga.rfid',        'icon' => '🔑', 'label' => 'Akses Portal & KTP'],
             ['route' => 'warga.bayar',       'icon' => '💳', 'label' => 'Bayar Iuran'],
             ['route' => 'warga.riwayat',     'icon' => '📜', 'label' => 'Riwayat Pembayaran'],
             ['route' => 'warga.kas',         'icon' => '📈', 'label' => 'Info Kas Umum'],
@@ -149,16 +154,6 @@
         @else
             <div class="sidebar-nav__section">Layanan Warga</div>
         @endif
-        @foreach ($items as $item)
-            @php
-                $isActive = request()->routeIs($item['route']);
-            @endphp
-            <a href="{{ route($item['route']) }}" class="{{ $isActive ? 'active' : '' }}">
-                <span class="nav-icon">{{ $item['icon'] }}</span>
-                <span>{{ $item['label'] }}</span>
-            </a>
-        @endforeach
-    </nav>
         @foreach ($items as $item)
             @php
                 $isActive = request()->routeIs($item['route']);

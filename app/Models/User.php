@@ -19,6 +19,10 @@ class User extends Authenticatable
         'password',
         'role',
         'warga_id',
+        'rfid_uid',
+        'rfid_label',
+        'rfid_registered_at',
+        'rfid_is_active',
     ];
 
     protected $hidden = [
@@ -30,6 +34,8 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'rfid_registered_at' => 'datetime',
+            'rfid_is_active' => 'boolean',
         ];
     }
 
@@ -41,6 +47,33 @@ class User extends Authenticatable
     public function warga()
     {
         return $this->belongsTo(Warga::class, 'warga_id');
+    }
+
+    public function gateAccessLogs()
+    {
+        return $this->hasMany(GateAccessLog::class, 'user_id');
+    }
+
+    public function rfidScanSessions()
+    {
+        return $this->hasMany(RfidScanSession::class, 'user_id');
+    }
+
+    public function hasRfidRegistered(): bool
+    {
+        return !empty($this->rfid_uid);
+    }
+
+    public function getMaskedRfidAttribute(): string
+    {
+        if (!$this->rfid_uid) {
+            return '-';
+        }
+        $parts = explode(':', $this->rfid_uid);
+        if (count($parts) >= 4) {
+            return $parts[0] . ':' . $parts[1] . ':••:••';
+        }
+        return substr($this->rfid_uid, 0, 4) . '••••';
     }
 
     public function isAdmin(): bool
