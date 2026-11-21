@@ -1,0 +1,1 @@
+console.log(`RTEX Frontend Development Server Active`);

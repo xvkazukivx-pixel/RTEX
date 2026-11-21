@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTEX — Frontend Development Server</title>
+    <link rel="icon" type="image/png" href="https://rtex.unique-monsters.my.id/assets/images/rtex-logo.png">
+    <script type="module" src="/src/js/app.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .card { background: #1e293b; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 16px; padding: 32px; max-width: 600px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+        .badge { display: inline-block; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid #3b82f6; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+        h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; color: #ffffff; }
+        p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
+        .btn-group { display: flex; flex-direction: column; gap: 12px; }
+        .btn { display: flex; align-items: center; justify-content: space-between; background: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; transition: background 0.2s; }
+        .btn:hover { background: #1d4ed8; }
+        .btn-outline { background: transparent; border: 1px solid #475569; color: #cbd5e1; }
+        .btn-outline:hover { background: #334155; border-color: #64748b; }
+        .terminal { background: #0b1120; border-radius: 8px; padding: 12px 16px; font-family: monospace; font-size: 13px; color: #38bdf8; margin-top: 24px; border: 1px solid rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <span class="badge">Vite Dev Server</span>
+        <h1>⚡ RTEX Frontend & Backend</h1>
+        <p>
+            Vite Frontend Development Server aktif pada port <b>5173</b>. Seluruh rute aplikasi RTEX dan API di-proxy secara mulus ke Laravel Backend pada port <b>8000</b>.
+        </p>
+
+        <div class="btn-group">
+            <a href="/login" class="btn">
+                <span>🔐 Buka Halaman Login RTEX</span>
+                <span>→</span>
+            </a>
+            <a href="http://127.0.0.1:8000" class="btn btn-outline" target="_blank">
+                <span>🌐 Akses Backend Langsung (Port 8000)</span>
+                <span>↗</span>
+            </a>
+        </div>
+
+        <div class="terminal">
+            $ cd frontend &amp;&amp; npm run dev<br>
+            $ cd backend &amp;&amp; php artisan serve
+        </div>
+    </div>
+</body>
+</html>
