@@ -1,34 +1,53 @@
 /* =========================================================================
- * RTEX SMART GATE - FIRMWARE ESP32 RFID / NFC (e-KTP)
+ * RTEX SMART GATE - FIRMWARE IOT ESP32 RFID / NFC (e-KTP)
  * =========================================================================
  * Sistem Akses Portal Perumahan & Registrasi e-KTP Berbasis IoT
- * Backend: RTEX (Sistem Administrasi Warga Digital)
- * Domain: https://rtex.unique-monsters.my.id
+ * Backend : RTEX (Sistem Administrasi Warga Digital)
+ * Server  : https://rtex.unique-monsters.my.id
  *
- * PUSTAKA (LIBRARY) ARDUINO YANG DIBUTUHKAN:
- * 1. MFRC522 by GithubCommunity (untuk RFID-RC522 SPI)
- * 2. ArduinoJson by Benoit Blanchon (versi 6.x atau 7.x)
- * 3. ESP32Servo by Kevin Harrington (untuk motor servo palang pintu)
+ * KOMPATIBEL DENGAN:
+ * 1. Arduino Nano ESP32 (ESP32-S3)
+ * 2. ESP32 DevKit Standar (30 pin / 38 pin ESP-WROOM-32 / NodeMCU-32S)
  *
- * SKEMA KONEKSI PIN:
+ * =========================================================================
+ * TABEL WIRING / PENGKABELAN:
+ * =========================================================================
+ * Wiring RC522 ke Arduino Nano ESP32:
+ *   RC522   | Pin Arduino Nano ESP32
+ *   --------|-----------------------
+ *   SDA(SS) | Pin D10 (atau GPIO 21)
+ *   SCK     | Pin D13 (atau GPIO 48)
+ *   MOSI    | Pin D11 (atau GPIO 38)
+ *   MISO    | Pin D12 (atau GPIO 47)
+ *   RST     | Pin D9  (atau GPIO 18)
+ *   GND     | GND
+ *   3.3V    | 3V3    ⚠️ (PERINGATAN: Jangan ke 5V / VBUS!)
+ *
+ *   Aktuator / Indikator Arduino Nano ESP32:
+ *   Servo   | Pin D6
+ *   Relay   | Pin D7
+ *   Buzzer  | Pin D5
+ *   LED Hijau | Pin D4 (Akses Diterima)
+ *   LED Merah | Pin D3 (Akses Ditolak)
+ *
  * -------------------------------------------------------------------------
- * RFID RC522          ESP32 DevKit
- * -------------------------------------------------------------------------
- * SDA (SS)      --->  GPIO 5
- * SCK           --->  GPIO 18
- * MOSI          --->  GPIO 23
- * MISO          --->  GPIO 19
- * RST           --->  GPIO 22
- * GND           --->  GND
- * 3.3V          --->  3V3 (PERINGATAN: JANGAN GUNAKAN PIN 5V!)
- * -------------------------------------------------------------------------
- * PERANGKAT LAIN      ESP32 DevKit
- * -------------------------------------------------------------------------
- * Servo Signal  --->  GPIO 13 (PWM Servo Palang Portal)
- * Relay Signal  --->  GPIO 12 (Active HIGH/LOW untuk Solenoid / Barrier Gate)
- * Buzzer (+)    --->  GPIO 14
- * LED Hijau (+) --->  GPIO 26 (Akses Diterima)
- * LED Merah (+) --->  GPIO 27 (Akses Ditolak)
+ * Wiring RC522 ke ESP32 Standar (DevKit 30/38 pin):
+ *   RC522   | Pin ESP32 DevKit
+ *   --------|-----------------
+ *   SDA(SS) | GPIO 5
+ *   SCK     | GPIO 18
+ *   MOSI    | GPIO 23
+ *   MISO    | GPIO 19
+ *   RST     | GPIO 22
+ *   GND     | GND
+ *   3.3V    | 3.3V   ⚠️ (PERINGATAN: Jangan ke 5V / VIN!)
+ *
+ *   Aktuator / Indikator ESP32 DevKit:
+ *   Servo   | GPIO 13
+ *   Relay   | GPIO 12
+ *   Buzzer  | GPIO 14
+ *   LED Hijau | GPIO 26 (Akses Diterima)
+ *   LED Merah | GPIO 27 (Akses Ditolak)
  * ========================================================================= */
 
 #include <WiFi.h>
@@ -36,10 +55,46 @@
 #include <WiFiClientSecure.h>
 #include <SPI.h>
 #include <MFRC522.h>
-#include <ESP32Servo.h>
-#include <ArduinoJson.h>
 
-// --- KONFIGURASI JARINGAN WIFI & SERVER RTEX ---
+// -------------------------------------------------------------------------
+// PILIHAN BOARD (Hapus komentar salah satu jika ingin memilih manual,
+// atau biarkan deteksi otomatis saat memilih board di Arduino IDE):
+// -------------------------------------------------------------------------
+// #define USE_NANO_ESP32
+// #define USE_DEVKIT_ESP32
+
+#if defined(ARDUINO_NANO_ESP32) || defined(USE_NANO_ESP32)
+  // Pinout Arduino Nano ESP32
+  #define BOARD_NAME      "Arduino Nano ESP32"
+  #define PIN_SS          D10
+  #define PIN_RST         D9
+  #define PIN_SERVO       D6
+  #define PIN_RELAY       D7
+  #define PIN_BUZZER      D5
+  #define PIN_LED_GREEN   D4
+  #define PIN_LED_RED     D3
+#else
+  // Pinout ESP32 Standar DevKit (30 / 38 pin)
+  #define BOARD_NAME      "ESP32 DevKit Standar"
+  #define PIN_SS          5
+  #define PIN_RST         22
+  #define PIN_SERVO       13
+  #define PIN_RELAY       12
+  #define PIN_BUZZER      14
+  #define PIN_LED_GREEN   26
+  #define PIN_LED_RED     27
+#endif
+
+// Library Servo: Support Arduino Nano ESP32 maupun ESP32 DevKit
+#if defined(ARDUINO_NANO_ESP32)
+  #include <Servo.h>
+#else
+  #include <ESP32Servo.h>
+#endif
+
+// =========================================================================
+// KONFIGURASI WIFI & SERVER RTEX (SESUAIKAN DENGAN JARINGAN ANDA)
+// =========================================================================
 const char* WIFI_SSID     = "NAMA_WIFI_RT_ANDA";       // Ganti dengan SSID WiFi Anda
 const char* WIFI_PASSWORD = "PASSWORD_WIFI_ANDA";     // Ganti dengan Password WiFi Anda
 
@@ -48,32 +103,36 @@ const char* SERVER_URL    = "https://rtex.unique-monsters.my.id/api/iot/gate/tap
 const char* API_KEY       = "rtex-gate-key-2026";
 const char* DEVICE_ID     = "PORTAL-UTAMA-RT05";
 
-// --- DEFINISI PIN HARDWARE ---
-#define PIN_SS          5
-#define PIN_RST         22
-#define PIN_SERVO       13
-#define PIN_RELAY       12
-#define PIN_BUZZER      14
-#define PIN_LED_GREEN   26
-#define PIN_LED_RED     27
-
-// --- OBJEK PERANGKAT ---
+// Objek RFID & Servo
 MFRC522 rfid(PIN_SS, PIN_RST);
 Servo gateServo;
 
-// Waktu cooldown agar 1 kartu tidak terbaca berkali-kali secara instan
+// Variabel Waktu Cooldown agar kartu tidak terbaca berulang seketika
 unsigned long lastTapTime = 0;
 const unsigned long TAP_COOLDOWN_MS = 2500;
 
-// Posisi Derajat Servo Palang
-const int SERVO_CLOSED_ANGLE = 0;   // Palang tertutup
-const int SERVO_OPENED_ANGLE = 90;  // Palang terbuka tegak
+// Sudut Gerakan Servo Palang
+const int SERVO_CLOSED_ANGLE = 0;   // Posisi palang tertutup datar
+const int SERVO_OPENED_ANGLE = 90;  // Posisi palang naik terbuka tegak
+
+// Forward declarations fungsi helper
+void connectToWiFi();
+void sendTapToServer(String uid);
+void indicateAccessGranted(String userName, String houseNo);
+void indicateRegistrationSuccess(String msg);
+void indicateAccessDenied(String reason);
+void beep(int durationMs);
+String parseJsonValue(const String& json, const String& key);
+bool parseJsonBool(const String& json, const String& key);
 
 void setup() {
   Serial.begin(115200);
-  delay(1000);
+  delay(1200);
+
   Serial.println("\n==============================================");
   Serial.println("   RTEX SMART GATE IOT CONTROLLER - ESP32     ");
+  Serial.print("   Tipe Board Terdeteksi: ");
+  Serial.println(BOARD_NAME);
   Serial.println("==============================================");
 
   // Inisialisasi Pin Output
@@ -87,32 +146,36 @@ void setup() {
   digitalWrite(PIN_LED_RED, LOW);
   digitalWrite(PIN_RELAY, LOW); // Relay Standby OFF
 
-  // Inisialisasi Servo
+  // Inisialisasi Servo Palang Pintu
   gateServo.attach(PIN_SERVO);
   gateServo.write(SERVO_CLOSED_ANGLE);
 
-  // Inisialisasi Bus SPI dan RFID Reader
+  // Inisialisasi SPI & RFID RC522
   SPI.begin();
   rfid.PCD_Init();
   delay(100);
-  rfid.PCD_DumpVersionToSerial();
-  Serial.println("Sensor RFID-RC522 Siap.");
 
-  // Hubungkan ke WiFi
+  Serial.print("Sensor RFID-RC522 pada Pin SS=");
+  Serial.print(PIN_SS);
+  Serial.print(", RST=");
+  Serial.println(PIN_RST);
+  rfid.PCD_DumpVersionToSerial();
+
+  // Koneksi ke WiFi
   connectToWiFi();
 
   // Beep 1x tanda sistem siap
   beep(100);
-  Serial.println("Sistem Smart Gate Aktif. Silakan tempelkan e-KTP.");
+  Serial.println("✓ Sistem Smart Gate Siap! Silakan tempelkan e-KTP.");
 }
 
 void loop() {
-  // Cek dan pulihkan koneksi WiFi jika terputus
+  // Cek dan pulihkan koneksi WiFi otomatis jika terputus
   if (WiFi.status() != WL_CONNECTED) {
     connectToWiFi();
   }
 
-  // Cek apakah ada kartu e-KTP baru di depan sensor
+  // Cek apakah ada kartu e-KTP / NFC di dekat sensor
   if (!rfid.PICC_IsNewCardPresent()) {
     return;
   }
@@ -122,7 +185,7 @@ void loop() {
     return;
   }
 
-  // Cooldown filter
+  // Filter cooldown agar 1 kali tap tidak terhitung ganda
   if (millis() - lastTapTime < TAP_COOLDOWN_MS) {
     rfid.PICC_HaltA();
     rfid.PCD_StopCrypto1();
@@ -130,7 +193,7 @@ void loop() {
   }
   lastTapTime = millis();
 
-  // Ubah UID byte array menjadi format Hex String (Contoh: "4A:2F:89:1B")
+  // Konversi UID byte array menjadi format Hexadesimal (Contoh: "4A:2F:89:1B")
   String uidString = "";
   for (byte i = 0; i < rfid.uid.size; i++) {
     if (i > 0) uidString += ":";
@@ -142,24 +205,29 @@ void loop() {
   uidString.toUpperCase();
 
   Serial.println("\n----------------------------------------------");
-  Serial.print("Kartu e-KTP Terdeteksi! UID: ");
+  Serial.print("💳 Kartu e-KTP Terdeteksi! UID: ");
   Serial.println(uidString);
 
-  // Beep pendek 1x saat kartu ditempel
+  // Beep pendek saat kartu pertama kali disentuh
   beep(60);
 
   // Kirim data UID ke Server RTEX
   sendTapToServer(uidString);
 
-  // Selesai baca kartu
+  // Hentikan komunikasi dengan kartu saat ini
   rfid.PICC_HaltA();
   rfid.PCD_StopCrypto1();
 }
 
-// Fungsi Menghubungkan ke Jaringan WiFi
+// -------------------------------------------------------------------------
+// FUNGSI MENGHUBUNGKAN KE WIFI
+// -------------------------------------------------------------------------
 void connectToWiFi() {
-  Serial.print("Menghubungkan ke WiFi: ");
-  Serial.println(WIFI_SSID);
+  if (WiFi.status() == WL_CONNECTED) return;
+
+  Serial.print("Menghubungkan ke WiFi [");
+  Serial.print(WIFI_SSID);
+  Serial.print("]");
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -172,91 +240,85 @@ void connectToWiFi() {
   }
 
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\nWiFi Terhubung!");
-    Serial.print("IP Address: ");
+    Serial.println("\n✓ WiFi Berhasil Terhubung!");
+    Serial.print("IP Address ESP32: ");
     Serial.println(WiFi.localIP());
   } else {
-    Serial.println("\nGagal terhubung ke WiFi. Berjalan dalam mode offline.");
+    Serial.println("\n⚠️ Gagal terhubung ke WiFi. Periksa SSID & Password.");
   }
 }
 
-// Fungsi Mengirim Data Tap ke REST API RTEX
+// -------------------------------------------------------------------------
+// FUNGSI MENGIRIM DATA TAP KE SERVER RTEX
+// -------------------------------------------------------------------------
 void sendTapToServer(String uid) {
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Error: Tidak ada koneksi WiFi.");
+    Serial.println("Error: Tidak ada koneksi internet!");
     indicateAccessDenied("Tidak Ada Koneksi Internet");
     return;
   }
 
   WiFiClientSecure client;
-  client.setInsecure(); // Mengabaikan validasi sertifikat SSL (HTTPS)
+  client.setInsecure(); // Mengabaikan verifikasi sertifikat SSL untuk kemudahan ESP32
 
   HTTPClient http;
   http.begin(client, SERVER_URL);
   http.addHeader("Content-Type", "application/json");
   http.addHeader("X-API-KEY", API_KEY);
 
-  // Format payload JSON
-  StaticJsonDocument<256> docRequest;
-  docRequest["uid"] = uid;
-  docRequest["device_id"] = DEVICE_ID;
-  docRequest["mode"] = "auto"; // Bisa untuk pendaftaran scan KTP & buka portal
+  // Buat Payload JSON sederhana tanpa dependensi library eksternal
+  String jsonPayload = "{\"uid\":\"" + uid + "\",\"device_id\":\"" + String(DEVICE_ID) + "\",\"mode\":\"auto\"}";
 
-  String jsonPayload;
-  serializeJson(docRequest, jsonPayload);
-
-  Serial.print("Mengirim payload: ");
+  Serial.print("Mengirim ke server: ");
   Serial.println(jsonPayload);
 
   int httpCode = http.POST(jsonPayload);
 
   if (httpCode > 0) {
     String responseString = http.getString();
-    Serial.print("HTTP Response Code: ");
+    Serial.print("HTTP Response: ");
     Serial.println(httpCode);
-    Serial.print("Response: ");
     Serial.println(responseString);
 
-    StaticJsonDocument<512> docResponse;
-    DeserializationError error = deserializeJson(docResponse, responseString);
+    bool success  = parseJsonBool(responseString, "success");
+    bool openGate = parseJsonBool(responseString, "open_gate");
+    String mode   = parseJsonValue(responseString, "mode");
+    String msg    = parseJsonValue(responseString, "message");
 
-    if (!error) {
-      bool success = docResponse["success"] | false;
-      bool openGate = docResponse["open_gate"] | false;
-      const char* mode = docResponse["mode"] | "gate_access";
-      const char* message = docResponse["message"] | "";
+    // 1. MODE REGISTRASI (User sedang klik 'Mulai Scan KTP' di Web)
+    if (mode == "registration" && success) {
+      Serial.println("\n==============================================");
+      Serial.println("🎉 MODE REGISTRASI: e-KTP BERHASIL DIDAFTARKAN!");
+      Serial.println("==============================================");
+      indicateRegistrationSuccess(msg);
+    }
+    // 2. MODE AKSES GERBANG: AKSES DITERIMA (BUKA PALANG PORTAL)
+    else if (openGate || (success && mode == "gate_access")) {
+      String userName = parseJsonValue(responseString, "user_name");
+      String houseNo  = parseJsonValue(responseString, "house_number");
+      if (userName == "") userName = "Warga RT";
 
-      // 1. MODE REGISTRASI KTP (Saat warga/admin menekan 'Mulai Scan KTP' di Web)
-      if (String(mode) == "registration" && success) {
-        Serial.println(">> MODE REGISTRASI: e-KTP BERHASIL DIDAFTARKAN! <<");
-        indicateRegistrationSuccess(message);
-      }
-      // 2. MODE AKSES GERBANG: AKSES DITERIMA (BUKA PORTAL)
-      else if (openGate) {
-        const char* userName = docResponse["user_name"] | "Warga";
-        const char* houseNo  = docResponse["house_number"] | "-";
-        Serial.print(">> AKSES DITERIMA! Selamat Datang: ");
-        Serial.print(userName);
-        Serial.print(" (No. ");
-        Serial.print(houseNo);
-        Serial.println(") <<");
+      Serial.println("\n==============================================");
+      Serial.print("🟢 AKSES DITERIMA! Selamat Datang, ");
+      Serial.print(userName);
+      Serial.print(" (Rumah: ");
+      Serial.print(houseNo);
+      Serial.println(")");
+      Serial.println("==============================================");
 
-        indicateAccessGranted();
-      }
-      // 3. AKSES DITOLAK (KTP BELUM TERDAFTAR / DINONAKTIFKAN)
-      else {
-        Serial.print(">> AKSES DITOLAK! Alasan: ");
-        Serial.print(message);
-        Serial.println(" <<");
+      indicateAccessGranted(userName, houseNo);
+    }
+    // 3. AKSES DITOLAK (KTP BELUM TERDAFTAR / DINONAKTIFKAN)
+    else {
+      Serial.println("\n==============================================");
+      Serial.print("🔴 AKSES DITOLAK! Alasan: ");
+      Serial.println(msg != "" ? msg : "KTP Tidak Terdaftar");
+      Serial.println("==============================================");
 
-        indicateAccessDenied(message);
-      }
-    } else {
-      Serial.println("Error parsing JSON dari server.");
-      indicateAccessDenied("Error Respons Server");
+      indicateAccessDenied(msg != "" ? msg : "Akses Ditolak");
     }
   } else {
-    Serial.print("Error koneksi HTTP: ");
+    Serial.print("⚠️ Gagal menghubungi server: ");
     Serial.println(http.errorToString(httpCode));
     indicateAccessDenied("Koneksi Server Gagal");
   }
@@ -264,25 +326,27 @@ void sendTapToServer(String uid) {
   http.end();
 }
 
-// Efek Akses Diterima (Buka Portal, LED Hijau, Beep Ceria 2x)
-void indicateAccessGranted() {
+// -------------------------------------------------------------------------
+// RESPON AKSI: AKSES DITERIMA (BUKA PORTAL)
+// -------------------------------------------------------------------------
+void indicateAccessGranted(String userName, String houseNo) {
   digitalWrite(PIN_LED_GREEN, HIGH);
   digitalWrite(PIN_LED_RED, LOW);
 
-  // Beep 2x ceria
+  // Beep gembira 2x
   beep(80);
   delay(80);
   beep(120);
 
-  // Buka Portal (Servo bergerak 90 derajat & Relay ON)
-  Serial.println("[PORTAL] Membuka palang portal...");
+  // Buka Palang Portal (Servo bergerak ke 90 derajat & Relay ON)
+  Serial.println("[PORTAL] Membuka palang portal (90 derajat)...");
   gateServo.write(SERVO_OPENED_ANGLE);
   digitalWrite(PIN_RELAY, HIGH);
 
-  // Tunggu portal terbuka selama 5 detik
+  // Tunggu selama 5 detik agar kendaraan/warga lewat
   delay(5000);
 
-  // Tutup kembali portal
+  // Tutup kembali palang portal
   Serial.println("[PORTAL] Menutup kembali palang portal...");
   gateServo.write(SERVO_CLOSED_ANGLE);
   digitalWrite(PIN_RELAY, LOW);
@@ -290,9 +354,13 @@ void indicateAccessGranted() {
   digitalWrite(PIN_LED_GREEN, LOW);
 }
 
-// Efek Registrasi e-KTP Berhasil di Web
-void indicateRegistrationSuccess(const char* msg) {
-  // LED Hijau berkedip 3x dan Beep nada gembira
+// -------------------------------------------------------------------------
+// RESPON AKSI: REGISTRASI e-KTP BERHASIL
+// -------------------------------------------------------------------------
+void indicateRegistrationSuccess(String msg) {
+  digitalWrite(PIN_LED_RED, LOW);
+
+  // Kedipkan LED Hijau 3x dan Beep nada registrasi sukses
   for (int i = 0; i < 3; i++) {
     digitalWrite(PIN_LED_GREEN, HIGH);
     digitalWrite(PIN_BUZZER, HIGH);
@@ -303,11 +371,13 @@ void indicateRegistrationSuccess(const char* msg) {
   }
 }
 
-// Efek Akses Ditolak (Portal Tetap Terkunci, LED Merah Berkedip, Beep Peringatan 3x)
-void indicateAccessDenied(const char* reason) {
+// -------------------------------------------------------------------------
+// RESPON AKSI: AKSES DITOLAK (PORTAL TERKUNCI)
+// -------------------------------------------------------------------------
+void indicateAccessDenied(String reason) {
   digitalWrite(PIN_LED_GREEN, LOW);
 
-  // 3x Beep panjang peringatan
+  // 3x Beep panjang peringatan & LED Merah berkedip
   for (int i = 0; i < 3; i++) {
     digitalWrite(PIN_LED_RED, HIGH);
     digitalWrite(PIN_BUZZER, HIGH);
@@ -318,9 +388,50 @@ void indicateAccessDenied(const char* reason) {
   }
 }
 
-// Helper Beep Buzzer
+// -------------------------------------------------------------------------
+// HELPER: BUZZER BEEP
+// -------------------------------------------------------------------------
 void beep(int durationMs) {
   digitalWrite(PIN_BUZZER, HIGH);
   delay(durationMs);
   digitalWrite(PIN_BUZZER, LOW);
+}
+
+// -------------------------------------------------------------------------
+// LIGHTWEIGHT JSON PARSER (Tidak memerlukan library tambahan eksternal)
+// -------------------------------------------------------------------------
+String parseJsonValue(const String& json, const String& key) {
+  String target = "\"" + key + "\":\"";
+  int startIdx = json.indexOf(target);
+  if (startIdx == -1) {
+    target = "\"" + key + "\": \"";
+    startIdx = json.indexOf(target);
+  }
+  if (startIdx == -1) return "";
+
+  startIdx += target.length();
+  int endIdx = json.indexOf("\"", startIdx);
+  if (endIdx == -1) return "";
+
+  return json.substring(startIdx, endIdx);
+}
+
+bool parseJsonBool(const String& json, const String& key) {
+  String target = "\"" + key + "\":";
+  int startIdx = json.indexOf(target);
+  if (startIdx == -1) {
+    target = "\"" + key + "\": ";
+    startIdx = json.indexOf(target);
+  }
+  if (startIdx == -1) return false;
+
+  int valStart = startIdx + target.length();
+  while (valStart < json.length() && (json[valStart] == ' ' || json[valStart] == '\t')) {
+    valStart++;
+  }
+
+  if (json.substring(valStart).startsWith("true")) {
+    return true;
+  }
+  return false;
 }
