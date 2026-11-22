@@ -85,18 +85,47 @@
   #define PIN_LED_RED     27
 #endif
 
-// Library Servo: Support Arduino Nano ESP32 maupun ESP32 DevKit
+// Library Servo: Support Arduino Nano ESP32 (Servo.h bawaan) & ESP32 DevKit (Native PWM bawaan)
+// TIDAK MEMERLUKAN library tambahan ESP32Servo sama sekali!
 #if defined(ARDUINO_NANO_ESP32)
   #include <Servo.h>
 #else
-  #include <ESP32Servo.h>
+  // Driver Servo Native ESP32 PWM (Built-in tanpa perlu install library eksternal)
+  class NativeGateServo {
+  private:
+    int _pin = -1;
+    int _channel = 0;
+  public:
+    void attach(int pin, int channel = 0) {
+      _pin = pin;
+      _channel = channel;
+      #if defined(ESP_ARDUINO_VERSION) && ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+        ledcAttach(_pin, 50, 16);
+      #else
+        ledcSetup(_channel, 50, 16);
+        ledcAttachPin(_pin, _channel);
+      #endif
+      write(0);
+    }
+    void write(int angle) {
+      if (_pin < 0) return;
+      angle = constrain(angle, 0, 180);
+      int duty = map(angle, 0, 180, 1638, 8192);
+      #if defined(ESP_ARDUINO_VERSION) && ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+        ledcWrite(_pin, duty);
+      #else
+        ledcWrite(_channel, duty);
+      #endif
+    }
+  };
+  #define Servo NativeGateServo
 #endif
 
 // =========================================================================
 // KONFIGURASI WIFI & SERVER RTEX (SESUAIKAN DENGAN JARINGAN ANDA)
 // =========================================================================
-const char* WIFI_SSID     = "NAMA_WIFI_RT_ANDA";       // Ganti dengan SSID WiFi Anda
-const char* WIFI_PASSWORD = "PASSWORD_WIFI_ANDA";     // Ganti dengan Password WiFi Anda
+const char* WIFI_SSID     = ":3";       // Ganti dengan SSID WiFi Anda
+const char* WIFI_PASSWORD = "Penyada9";     // Ganti dengan Password WiFi Anda
 
 // Endpoint Backend RTEX API
 const char* SERVER_URL    = "https://rtex.unique-monsters.my.id/api/iot/gate/tap";
