@@ -12,6 +12,58 @@
     @if (file_exists(public_path('hot')) || file_exists(public_path('build/manifest.json')))
         @vite(['src/css/app.css', 'src/js/app.js'])
     @endif
+    <style>
+        .secret-trigger {
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            display: block;
+            margin: 0 auto;
+            text-align: center;
+            transition: transform 0.12s ease;
+        }
+        .secret-trigger:active {
+            transform: scale(0.95);
+        }
+        @keyframes quickLoginSlideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .quick-login-animate {
+            animation: quickLoginSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .secret-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(30px);
+            background: rgba(15, 23, 42, 0.92);
+            color: #ffffff;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 10px 22px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+            z-index: 99999;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            text-align: center;
+        }
+        .secret-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
 </head>
 <body>
 @php
@@ -21,8 +73,10 @@
 @endphp
 <div class="auth-shell">
     <div class="auth-card">
-        <img class="auth-seal" src="{{ asset('assets/images/rtex-logo.png') }}" alt="Logo RTEX">
-        <h1 class="text-center mb-1" style="font-family:var(--font-display); font-size:22px; font-weight:700;">RTEX</h1>
+        <div id="rtexLogoTrigger" class="secret-trigger" title="RTEX">
+            <img class="auth-seal" src="{{ asset('assets/images/rtex-logo.png') }}" alt="Logo RTEX" style="pointer-events:none;">
+            <h1 class="text-center mb-1" style="font-family:var(--font-display); font-size:22px; font-weight:700; pointer-events:none;">RTEX</h1>
+        </div>
         <p class="text-center text-muted-rt mb-4" style="font-size:13px;">Sistem Iuran, Kas &amp; Layanan Warga RT Digital</p>
 
         <div class="auth-tabs">
@@ -62,7 +116,7 @@
                 <button type="submit" class="btn-rt-primary w-100" style="padding:11px;">Masuk</button>
             </form>
 
-            <div class="quick-login-wrap mt-4 pt-3">
+            <div class="quick-login-wrap mt-4 pt-3" id="quickLoginWrap" style="display: none;">
                 <div class="quick-login-title">⚡ Akses Cepat Login</div>
                 <div class="quick-login-grid">
                     <button type="button" class="btn-quick-role" data-u="superadmin" data-p="super123" title="Login Super Admin">
@@ -169,6 +223,86 @@ document.querySelectorAll('.btn-quick-role').forEach(function (btn) {
         }
     });
 });
+
+// Secret Easter Egg: Klik 7x Logo RTEX untuk Menampilkan / Menyembunyikan Akses Cepat Login
+(function () {
+    const trigger = document.getElementById('rtexLogoTrigger');
+    const wrap = document.getElementById('quickLoginWrap');
+    if (!trigger || !wrap) return;
+
+    let clickCount = 0;
+    let resetTimer = null;
+
+    // Elemen Toast Notifikasi Rahasia
+    const toast = document.createElement('div');
+    toast.className = 'secret-toast';
+    document.body.appendChild(toast);
+
+    function showToast(msg, duration = 2500) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toast._timeout);
+        toast._timeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, duration);
+    }
+
+    // Periksa apakah sebelumnya sudah dibuka (dalam sessionStorage) atau URL param ?quick=1
+    const urlParams = new URLSearchParams(window.location.search);
+    const isParamActive = urlParams.get('quick') === '1' || urlParams.get('dev') === '1';
+    const isSessionActive = sessionStorage.getItem('rtex_quick_login_unlocked') === '1';
+
+    if (isParamActive || isSessionActive) {
+        wrap.style.display = 'block';
+    }
+
+    trigger.addEventListener('click', function (e) {
+        clickCount++;
+
+        // Haptic feedback getar halus di smartphone jika didukung
+        if (navigator.vibrate) {
+            try { navigator.vibrate(30); } catch (err) {}
+        }
+
+        // Animasi klik mikro pada logo
+        trigger.style.transform = 'scale(0.93)';
+        setTimeout(() => {
+            trigger.style.transform = 'scale(1)';
+        }, 120);
+
+        // Reset hitungan jika jeda antar-klik > 2.5 detik
+        clearTimeout(resetTimer);
+        resetTimer = setTimeout(() => {
+            clickCount = 0;
+        }, 2500);
+
+        // Jika klik sudah mencapai 7 kali
+        if (clickCount >= 7) {
+            clickCount = 0;
+            const isHidden = (wrap.style.display === 'none' || getComputedStyle(wrap).display === 'none');
+
+            if (isHidden) {
+                // Pastikan tab "Masuk Akun" aktif jika user sedang di tab daftar
+                const masukTabBtn = document.querySelector('.auth-tab-btn[data-tab="panelMasuk"]');
+                if (masukTabBtn && !masukTabBtn.classList.contains('active')) {
+                    masukTabBtn.click();
+                }
+
+                wrap.style.display = 'block';
+                wrap.classList.remove('quick-login-animate');
+                void wrap.offsetWidth; // trigger reflow untuk restart animasi
+                wrap.classList.add('quick-login-animate');
+                sessionStorage.setItem('rtex_quick_login_unlocked', '1');
+                showToast('⚡ Akses Cepat Login Berhasil Ditampilkan!');
+            } else {
+                wrap.style.display = 'none';
+                wrap.classList.remove('quick-login-animate');
+                sessionStorage.removeItem('rtex_quick_login_unlocked');
+                showToast('🔒 Akses Cepat Login Disembunyikan');
+            }
+        }
+    });
+})();
 </script>
 </body>
 </html>
