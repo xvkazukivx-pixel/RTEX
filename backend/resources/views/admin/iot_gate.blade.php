@@ -73,13 +73,24 @@
             <div class="section-title mb-1"><span class="dot"></span> Kontrol Gerbang & Alat IoT</div>
             <div class="text-muted-rt" style="font-size: 13.5px;">
                 Status Server IoT: <span class="badge bg-success-subtle text-success border border-success-subtle">● ONLINE</span>
-                &nbsp;|&nbsp; Endpoint: <code style="font-size: 12px; background: rgba(59,130,246,0.1); padding: 2px 6px; border-radius: 4px;">POST /api/iot/gate/tap</code>
+                &nbsp;|&nbsp; Login: <b>{{ auth()->user()->nama }}</b> ({{ auth()->user()->role }})
+                &nbsp;|&nbsp; Status KTP Anda: 
+                @if (auth()->user()->hasRfidRegistered())
+                    <span class="badge bg-success text-white">● Terdaftar (<code>{{ auth()->user()->rfid_uid }}</code>)</span>
+                @else
+                    <span class="badge bg-warning-subtle text-warning-emphasis border">○ Belum Terdaftar</span>
+                @endif
             </div>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <!-- Scan e-KTP Langsung via ESP32 -->
-            <button type="button" class="btn-rt-primary" onclick="openAdminScanModal()">
-                📡 Scan e-KTP (via ESP32)
+            <!-- Scan e-KTP Khusus untuk Akun yang Sedang Login -->
+            <button type="button" class="btn-rt-primary" onclick="openAdminScanForSelf()" title="Pindai dan daftarkan e-KTP untuk akun Anda sendiri">
+                📡 Scan e-KTP Akun Saya ({{ auth()->user()->nama }})
+            </button>
+
+            <!-- Scan e-KTP untuk Warga Lain -->
+            <button type="button" class="btn-rt-outline" onclick="openAdminScanModal()" title="Pindai dan daftarkan e-KTP untuk warga lain">
+                👥 Scan untuk Warga Lain
             </button>
 
             <!-- Uji Simulasi Tap Gerbang -->
@@ -245,9 +256,12 @@
                     </thead>
                     <tbody id="wargaTableBody">
                         @foreach ($wargaUsers as $wu)
-                            <tr id="user-row-{{ $wu->id }}">
+                            <tr id="user-row-{{ $wu->id }}" class="{{ $wu->id === auth()->id() ? 'table-primary-subtle' : '' }}">
                                 <td>
                                     <strong>{{ $wu->nama }}</strong>
+                                    @if ($wu->id === auth()->id())
+                                        <span class="badge bg-primary text-white ms-1" style="font-size: 10.5px;">⭐ Akun Anda</span>
+                                    @endif
                                     <div style="font-size: 11.5px; color: #64748b;">{{ $wu->username }}</div>
                                 </td>
                                 <td><span class="badge bg-light text-dark border">{{ $wu->role }}</span></td>
@@ -284,8 +298,8 @@
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-1">
                                         <!-- Tombol Scan KTP Langsung via ESP32 -->
-                                        <button type="button" class="btn btn-sm btn-primary text-white" onclick="openAdminScanForUser({{ $wu->id }}, '{{ addslashes($wu->nama) }}', '{{ $wu->warga?->no_rumah ?? '-' }}')" title="Scan KTP langsung via ESP32 untuk {{ $wu->nama }}">
-                                            📡 Scan KTP
+                                        <button type="button" class="btn btn-sm {{ $wu->id === auth()->id() ? 'btn-success' : 'btn-primary' }} text-white" onclick="openAdminScanForUser({{ $wu->id }}, '{{ addslashes($wu->nama) }}', '{{ $wu->warga?->no_rumah ?? '-' }}')" title="Scan KTP langsung via ESP32 untuk {{ $wu->nama }}">
+                                            📡 {{ $wu->id === auth()->id() ? 'Scan KTP Saya' : 'Scan KTP' }}
                                         </button>
 
                                         <!-- Edit/Assign Manual UID Button -->
@@ -406,23 +420,38 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="stopAdminScanPolling()"></button>
             </div>
             <div class="modal-body py-3">
+                <!-- Pilihan Cepat: Akun Sendiri vs Warga Lain -->
+                <div class="d-flex gap-2 mb-3">
+                    <button type="button" class="btn btn-sm btn-outline-primary active flex-fill" id="btnTargetSelf" onclick="openAdminScanForSelf()">
+                        ⭐ Akun Saya Sendiri ({{ auth()->user()->nama }})
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" id="btnTargetOther" onclick="toggleSelectTargetOther()">
+                        👥 Pilih Warga Lain
+                    </button>
+                </div>
+
                 <!-- Dropdown Pilih Warga Target -->
-                <div class="mb-3" id="adminScanUserSelectContainer">
-                    <label class="form-label fw-semibold" style="font-size: 13px;">Target Warga yang Didaftarkan:</label>
+                <div class="mb-3" id="adminScanUserSelectContainer" style="display: none;">
+                    <label class="form-label fw-semibold" style="font-size: 13px;">Pilih Akun Warga yang Didaftarkan:</label>
                     <select id="adminScanTargetUserId" class="form-select form-select-sm" onchange="onScanTargetUserChanged()">
+                        <option value="{{ auth()->id() }}" data-nama="{{ auth()->user()->nama }}" data-rumah="{{ auth()->user()->warga?->no_rumah ?? '-' }}" selected>
+                            ⭐ [AKUN SAYA SENDIRI] {{ auth()->user()->nama }} ({{ auth()->user()->role }}) {{ auth()->user()->hasRfidRegistered() ? '✓ [KTP: ' . auth()->user()->rfid_uid . ']' : '[Belum Terdaftar]' }}
+                        </option>
                         @foreach ($wargaUsers as $wu)
-                            <option value="{{ $wu->id }}" data-nama="{{ $wu->nama }}" data-rumah="{{ $wu->warga?->no_rumah ?? '-' }}">
-                                {{ $wu->nama }} ({{ $wu->role }}) {{ $wu->warga?->no_rumah ? '- No. ' . $wu->warga->no_rumah : '' }} {{ $wu->hasRfidRegistered() ? '✓ [KTP: ' . $wu->rfid_uid . ']' : '[Belum Terdaftar]' }}
-                            </option>
+                            @if ($wu->id !== auth()->id())
+                                <option value="{{ $wu->id }}" data-nama="{{ $wu->nama }}" data-rumah="{{ $wu->warga?->no_rumah ?? '-' }}">
+                                    {{ $wu->nama }} ({{ $wu->role }}) {{ $wu->warga?->no_rumah ? '- No. ' . $wu->warga->no_rumah : '' }} {{ $wu->hasRfidRegistered() ? '✓ [KTP: ' . $wu->rfid_uid . ']' : '[Belum Terdaftar]' }}
+                                </option>
+                            @endif
                         @endforeach
                     </select>
                 </div>
 
                 <!-- Info Box Target Warga Aktif -->
                 <div class="p-2 mb-3 rounded-2 text-center" style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2);">
-                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Target Warga Aktif</div>
-                    <div class="fw-bold text-primary fs-6" id="scanTargetUserDisplay">-</div>
-                    <div style="font-size: 12px; color: #475569;" id="scanTargetHouseDisplay">-</div>
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Target Registrasi e-KTP</div>
+                    <div class="fw-bold text-primary fs-6" id="scanTargetUserDisplay">{{ auth()->user()->nama }}</div>
+                    <div style="font-size: 12px; color: #475569;" id="scanTargetHouseDisplay">Akun yang Sedang Login</div>
                 </div>
 
                 <!-- Radar pulse animation -->
@@ -588,30 +617,62 @@ const SIMULATE_TAP_URL = "{{ route('admin.iot_gate.simulate_tap') }}";
 const LOGS_DATA_URL = "{{ route('admin.iot_gate.logs_data') }}";
 const CSRF_TOKEN = "{{ csrf_token() }}";
 
+const LOGGED_IN_USER_ID = {{ auth()->id() }};
+const LOGGED_IN_USER_NAME = "{{ addslashes(auth()->user()->nama) }}";
+const LOGGED_IN_USER_HOUSE = "{{ auth()->user()->warga?->no_rumah ?? '-' }}";
+
 let adminScanInterval = null;
 let adminCountdownTimer = null;
-let currentTargetUserId = null;
-let currentTargetUserName = '';
-let currentTargetHouseNo = '';
+let currentTargetUserId = LOGGED_IN_USER_ID;
+let currentTargetUserName = LOGGED_IN_USER_NAME;
+let currentTargetHouseNo = LOGGED_IN_USER_HOUSE;
 let isScanningActive = false;
 
 // =============================================================================
 // MODAL SCAN ESP32 CONTROLLER
 // =============================================================================
-function openAdminScanModal() {
-    const select = document.getElementById('adminScanTargetUserId');
-    if (select && select.options.length > 0) {
-        if (!currentTargetUserId) {
-            currentTargetUserId = select.options[0].value;
-            currentTargetUserName = select.options[0].dataset.nama || select.options[0].text;
-            currentTargetHouseNo = select.options[0].dataset.rumah || '-';
-        }
+function openAdminScanForSelf() {
+    const btnSelf = document.getElementById('btnTargetSelf');
+    const btnOther = document.getElementById('btnTargetOther');
+    if (btnSelf) {
+        btnSelf.classList.add('active', 'btn-outline-primary');
+        btnSelf.classList.remove('btn-outline-secondary');
     }
-    updateTargetDisplay();
+    if (btnOther) {
+        btnOther.classList.remove('active', 'btn-outline-primary');
+        btnOther.classList.add('btn-outline-secondary');
+    }
+    const container = document.getElementById('adminScanUserSelectContainer');
+    if (container) container.style.display = 'none';
+
+    openAdminScanForUser(LOGGED_IN_USER_ID, LOGGED_IN_USER_NAME + ' (Akun Anda)', LOGGED_IN_USER_HOUSE);
+}
+
+function toggleSelectTargetOther() {
+    const btnSelf = document.getElementById('btnTargetSelf');
+    const btnOther = document.getElementById('btnTargetOther');
+    if (btnOther) {
+        btnOther.classList.add('active', 'btn-outline-primary');
+        btnOther.classList.remove('btn-outline-secondary');
+    }
+    if (btnSelf) {
+        btnSelf.classList.remove('active', 'btn-outline-primary');
+        btnSelf.classList.add('btn-outline-secondary');
+    }
+    const container = document.getElementById('adminScanUserSelectContainer');
+    if (container) container.style.display = 'block';
+
+    const select = document.getElementById('adminScanTargetUserId');
+    if (select) {
+        onScanTargetUserChanged();
+    }
+}
+
+function openAdminScanModal() {
+    toggleSelectTargetOther();
     const modalEl = document.getElementById('modalAdminScanEsp32');
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
-    startAdminScan(currentTargetUserId);
 }
 
 function openAdminScanForUser(userId, userName, houseNo) {

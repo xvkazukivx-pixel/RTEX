@@ -113,6 +113,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="stopScanPolling()"></button>
             </div>
             <div class="modal-body text-center py-4">
+                <div class="p-2 mb-3 rounded-2 text-center" style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2);">
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Target Registrasi Akun</div>
+                    <div class="fw-bold text-primary fs-6">{{ $user->nama }}</div>
+                    <div style="font-size: 12px; color: #475569;">Rumah: {{ $user->warga?->no_rumah ?? '-' }} (Akun yang Sedang Login)</div>
+                </div>
+
                 <!-- Radar animation -->
                 <div class="scan-radar-container my-3">
                     <div class="scan-pulse"></div>

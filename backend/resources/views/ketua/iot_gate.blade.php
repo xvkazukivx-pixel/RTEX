@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Monitoring Portal Gerbang RT/RW')
-@section('page_title', 'Monitoring Portal Gerbang RT/RW (IoT)')
-@section('page_subtitle', 'Pengawasan Akses Keluar-Masuk Warga Berbasis e-KTP RFID / NFC')
+@section('title', 'Monitoring Portal IoT & KTP')
+@section('page_title', 'Monitoring Portal IoT & Autentikasi e-KTP')
+@section('page_subtitle', 'Pusat Kontrol Akses Gerbang Perumahan Berbasis ESP32 RFID / NFC')
 
 @section('content')
 <style>
@@ -40,28 +40,28 @@
         <div class="stat-card">
             <div class="stat-label">Total Akses Hari Ini</div>
             <div class="stat-value" id="statTodayTotal">{{ $stats['today_total'] }}</div>
-            <div class="stat-hint">Seluruh kendaraan/warga melintas</div>
+            <div class="stat-hint">Seluruh aktivitas tap di gerbang</div>
         </div>
     </div>
     <div class="col-xl-3 col-sm-6">
         <div class="stat-card">
             <div class="stat-label" style="color: #059669;">Akses Diterima</div>
             <div class="stat-value text-success" id="statTodayGranted">{{ $stats['today_granted'] }}</div>
-            <div class="stat-hint">Warga resmi berizin</div>
+            <div class="stat-hint">Portal terbuka otomatis</div>
         </div>
     </div>
     <div class="col-xl-3 col-sm-6">
         <div class="stat-card {{ $stats['today_denied'] > 0 ? 'accent' : '' }}">
             <div class="stat-label" style="color: #dc2626;">Akses Ditolak</div>
             <div class="stat-value text-danger" id="statTodayDenied">{{ $stats['today_denied'] }}</div>
-            <div class="stat-hint">KTP asing / tidak dikenal</div>
+            <div class="stat-hint">KTP belum terdaftar / dinonaktifkan</div>
         </div>
     </div>
     <div class="col-xl-3 col-sm-6">
         <div class="stat-card">
-            <div class="stat-label">Total KTP Terdaftar</div>
+            <div class="stat-label">KTP Warga Terdaftar</div>
             <div class="stat-value text-primary" id="statRegisteredUsers">{{ $stats['registered_users'] }}</div>
-            <div class="stat-hint">Warga pemegang kartu aktif</div>
+            <div class="stat-hint">Warga aktif pemilik akses</div>
         </div>
     </div>
 </div>
@@ -70,16 +70,27 @@
 <div class="card-rt mb-4">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
-            <div class="section-title mb-1"><span class="dot"></span> Kontrol Gerbang Eksekutif</div>
+            <div class="section-title mb-1"><span class="dot"></span> Kontrol Gerbang & Alat IoT</div>
             <div class="text-muted-rt" style="font-size: 13.5px;">
-                Status Smart Barrier Gate: <span class="badge bg-success-subtle text-success border border-success-subtle">● TERHUBUNG</span>
-                &nbsp;|&nbsp; Endpoint: <code style="font-size: 12px; background: rgba(59,130,246,0.1); padding: 2px 6px; border-radius: 4px;">POST /api/iot/gate/tap</code>
+                Status Server IoT: <span class="badge bg-success-subtle text-success border border-success-subtle">● ONLINE</span>
+                &nbsp;|&nbsp; Login: <b>{{ auth()->user()->nama }}</b> ({{ auth()->user()->role }})
+                &nbsp;|&nbsp; Status KTP Anda: 
+                @if (auth()->user()->hasRfidRegistered())
+                    <span class="badge bg-success text-white">● Terdaftar (<code>{{ auth()->user()->rfid_uid }}</code>)</span>
+                @else
+                    <span class="badge bg-warning-subtle text-warning-emphasis border">○ Belum Terdaftar</span>
+                @endif
             </div>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <!-- Scan e-KTP Langsung via ESP32 -->
-            <button type="button" class="btn-rt-primary" onclick="openAdminScanModal()">
-                📡 Scan e-KTP (via ESP32)
+            <!-- Scan e-KTP Khusus untuk Akun yang Sedang Login -->
+            <button type="button" class="btn-rt-primary" onclick="openAdminScanForSelf()" title="Pindai dan daftarkan e-KTP untuk akun Anda sendiri">
+                📡 Scan e-KTP Akun Saya ({{ auth()->user()->nama }})
+            </button>
+
+            <!-- Scan e-KTP untuk Warga Lain -->
+            <button type="button" class="btn-rt-outline" onclick="openAdminScanModal()" title="Pindai dan daftarkan e-KTP untuk warga lain">
+                👥 Scan untuk Warga Lain
             </button>
 
             <!-- Uji Simulasi Tap Gerbang -->
@@ -92,13 +103,18 @@
                 ➕ Input UID Manual
             </button>
 
-            <!-- Buka Portal Darurat -->
+            <!-- Buka Portal Manual Darurat -->
             <form action="{{ route('ketua.iot_gate.manual_open') }}" method="POST" class="d-inline" onsubmit="return confirm('Buka portal perumahan secara manual sekarang?');">
                 @csrf
                 <button type="submit" class="btn-rt-outline" style="border-color: #f59e0b; color: #b45309;">
-                    🚨 Buka Portal Darurat (Manual)
+                    🚨 Buka Portal Manual (Darurat)
                 </button>
             </form>
+
+            <!-- Download Firmware -->
+            <a href="{{ route('ketua.iot_gate.firmware') }}" class="btn-rt-outline">
+                💾 Download Firmware ESP32 (.ino)
+            </a>
         </div>
     </div>
 </div>
@@ -107,12 +123,17 @@
 <ul class="nav nav-pills mb-3 gap-2" id="iotGateTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active fw-semibold" id="tab-logs-btn" data-bs-toggle="tab" data-bs-target="#tab-logs" type="button" role="tab">
-            📋 Log Keluar-Masuk Real-time
+            📋 Log Akses Gerbang Real-time
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link fw-semibold" id="tab-users-btn" data-bs-toggle="tab" data-bs-target="#tab-users" type="button" role="tab">
             👥 Data KTP Seluruh Warga ({{ $wargaUsers->count() }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-semibold" id="tab-guide-btn" data-bs-toggle="tab" data-bs-target="#tab-guide" type="button" role="tab">
+            🛠️ Skema Hardware & Firmware ESP32
         </button>
     </li>
 </ul>
@@ -123,7 +144,7 @@
         <div class="card-rt">
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                 <div class="section-title mb-0">
-                    <span class="dot"></span> Log Keluar-Masuk Gerbang Terkini
+                    <span class="dot"></span> Riwayat Tap Gerbang Terkini
                     <span class="badge bg-light text-muted border ms-2" style="font-size: 11px; font-weight: normal;" id="logAutoRefreshStatus">● Auto-update aktif</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
@@ -137,7 +158,7 @@
                             <option value="granted" {{ $statusFilter === 'granted' ? 'selected' : '' }}>Diterima Saja</option>
                             <option value="denied" {{ $statusFilter === 'denied' ? 'selected' : '' }}>Ditolak Saja</option>
                         </select>
-                        <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Cari</button>
                     </form>
                 </div>
             </div>
@@ -146,7 +167,7 @@
                 <table class="table table-hover align-middle mb-0" style="font-size: 13.5px;">
                     <thead class="table-light">
                         <tr>
-                            <th>Waktu Melintas</th>
+                            <th>Waktu Tap</th>
                             <th>Nama Warga</th>
                             <th>No. Rumah</th>
                             <th>UID KTP</th>
@@ -162,7 +183,7 @@
                                 <td>
                                     <strong>{{ $log->warga_nama }}</strong>
                                     @if ($log->user)
-                                        <div style="font-size: 11px; color: #64748b;">Peran: {{ $log->user->role }}</div>
+                                        <div style="font-size: 11px; color: #64748b;">Role: {{ $log->user->role }}</div>
                                     @endif
                                 </td>
                                 <td><span class="badge bg-light text-dark border">{{ $log->no_rumah ?: '-' }}</span></td>
@@ -235,9 +256,12 @@
                     </thead>
                     <tbody id="wargaTableBody">
                         @foreach ($wargaUsers as $wu)
-                            <tr id="user-row-{{ $wu->id }}">
+                            <tr id="user-row-{{ $wu->id }}" class="{{ $wu->id === auth()->id() ? 'table-primary-subtle' : '' }}">
                                 <td>
                                     <strong>{{ $wu->nama }}</strong>
+                                    @if ($wu->id === auth()->id())
+                                        <span class="badge bg-primary text-white ms-1" style="font-size: 10.5px;">⭐ Akun Anda</span>
+                                    @endif
                                     <div style="font-size: 11.5px; color: #64748b;">{{ $wu->username }}</div>
                                 </td>
                                 <td><span class="badge bg-light text-dark border">{{ $wu->role }}</span></td>
@@ -274,8 +298,8 @@
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-1">
                                         <!-- Tombol Scan KTP Langsung via ESP32 -->
-                                        <button type="button" class="btn btn-sm btn-primary text-white" onclick="openAdminScanForUser({{ $wu->id }}, '{{ addslashes($wu->nama) }}', '{{ $wu->warga?->no_rumah ?? '-' }}')" title="Scan KTP langsung via ESP32 untuk {{ $wu->nama }}">
-                                            📡 Scan KTP
+                                        <button type="button" class="btn btn-sm {{ $wu->id === auth()->id() ? 'btn-success' : 'btn-primary' }} text-white" onclick="openAdminScanForUser({{ $wu->id }}, '{{ addslashes($wu->nama) }}', '{{ $wu->warga?->no_rumah ?? '-' }}')" title="Scan KTP langsung via ESP32 untuk {{ $wu->nama }}">
+                                            📡 {{ $wu->id === auth()->id() ? 'Scan KTP Saya' : 'Scan KTP' }}
                                         </button>
 
                                         <!-- Edit/Assign Manual UID Button -->
@@ -310,6 +334,76 @@
             </div>
         </div>
     </div>
+
+    <!-- TAB 3: PANDUAN HARDWARE & FIRMWARE ESP32 -->
+    <div class="tab-pane fade" id="tab-guide" role="tabpanel">
+        <div class="card-rt mb-4">
+            <div class="section-title"><span class="dot"></span> Panduan Hardware & Rangkaian ESP32 IoT Smart Gate</div>
+            
+            <div class="row g-4 mt-1">
+                <div class="col-lg-6">
+                    <h6 class="fw-bold text-primary">📌 Komponen Hardware yang Digunakan:</h6>
+                    <ul class="mb-3" style="font-size: 13.5px; line-height: 1.8;">
+                        <li><b>Mikrokontroler</b>: ESP32 DevKit v1 / NodeMCU-32S (Built-in WiFi 2.4GHz).</li>
+                        <li><b>Reader RFID/NFC</b>: Modul <b>RC522 (13.56 MHz SPI)</b> atau <b>PN532 (NFC)</b>. Mampu membaca seluruh jenis e-KTP Indonesia standar ISO 14443 Type A.</li>
+                        <li><b>Aktuator Portal</b>: Motor Servo (MG995 / MG996R / SG90) untuk simulasi palang gerbang, atau Modul Relay 5V untuk mengontrol barrier gate otomatis / solenoid door lock.</li>
+                        <li><b>Indikator Suara & Visual</b>: Active Buzzer 5V, LED Hijau (Akses Diterima), dan LED Merah (Akses Ditolak).</li>
+                        <li><b>Display (Opsional)</b>: LCD 16x2 I2C (Address 0x27) atau OLED 0.96" SSD1306.</li>
+                    </ul>
+
+                    <h6 class="fw-bold text-primary">🔌 Skema Pinout (ESP32 ke RC522 RFID SPI):</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm text-center" style="font-size: 12.5px;">
+                            <thead class="table-light">
+                                <tr><th>Pin RC522</th><th>Pin ESP32</th><th>Fungsi</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>SDA (SS)</td><td><b>GPIO 5</b></td><td>SPI Chip Select</td></tr>
+                                <tr><td>SCK</td><td><b>GPIO 18</b></td><td>SPI Clock</td></tr>
+                                <tr><td>MOSI</td><td><b>GPIO 23</b></td><td>SPI Data In</td></tr>
+                                <tr><td>MISO</td><td><b>GPIO 19</b></td><td>SPI Data Out</td></tr>
+                                <tr><td>RST</td><td><b>GPIO 22</b></td><td>Reset Pin</td></tr>
+                                <tr><td>GND</td><td><b>GND</b></td><td>Ground</td></tr>
+                                <tr><td>3.3V</td><td><b>3V3</b> (Jangan 5V)</td><td>Tegangan Kerja RC522</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <h6 class="fw-bold text-primary">🔌 Skema Pinout Aktuator & Indikator:</h6>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-bordered table-sm text-center" style="font-size: 12.5px;">
+                            <thead class="table-light">
+                                <tr><th>Perangkat</th><th>Pin ESP32</th><th>Keterangan</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Servo PWM / Relay</td><td><b>GPIO 13</b></td><td>Sinyal buka palang (90° / Relay ON)</td></tr>
+                                <tr><td>Buzzer (+)</td><td><b>GPIO 14</b></td><td>Beep 2x Sukses, Beep 3x Ditolak</td></tr>
+                                <tr><td>LED Hijau (+)</td><td><b>GPIO 26</b></td><td>Indikator Akses Diterima</td></tr>
+                                <tr><td>LED Merah (+)</td><td><b>GPIO 27</b></td><td>Indikator Akses Ditolak</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="fw-bold text-primary">⚙️ Konfigurasi URL & API Key pada Firmware:</h6>
+                    <div class="p-3 bg-dark text-light rounded font-monospace" style="font-size: 12px;">
+                        const char* ssid = "NAMA_WIFI_RT";<br>
+                        const char* password = "PASSWORD_WIFI";<br>
+                        const char* serverUrl = "https://rtex.unique-monsters.my.id/api/iot/gate/tap";<br>
+                        const char* apiKey = "rtex-gate-key-2026";<br>
+                        const char* deviceId = "PORTAL-UTAMA-RT05";
+                    </div>
+
+                    <div class="mt-3">
+                        <a href="{{ route('ketua.iot_gate.firmware') }}" class="btn-rt-primary w-100 text-center">
+                            ⬇️ Unduh File Kode Arduino (.ino) Lengkap
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- ========================================================================= -->
@@ -326,23 +420,38 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="stopAdminScanPolling()"></button>
             </div>
             <div class="modal-body py-3">
+                <!-- Pilihan Cepat: Akun Sendiri vs Warga Lain -->
+                <div class="d-flex gap-2 mb-3">
+                    <button type="button" class="btn btn-sm btn-outline-primary active flex-fill" id="btnTargetSelf" onclick="openAdminScanForSelf()">
+                        ⭐ Akun Saya Sendiri ({{ auth()->user()->nama }})
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" id="btnTargetOther" onclick="toggleSelectTargetOther()">
+                        👥 Pilih Warga Lain
+                    </button>
+                </div>
+
                 <!-- Dropdown Pilih Warga Target -->
-                <div class="mb-3" id="adminScanUserSelectContainer">
-                    <label class="form-label fw-semibold" style="font-size: 13px;">Target Warga yang Didaftarkan:</label>
+                <div class="mb-3" id="adminScanUserSelectContainer" style="display: none;">
+                    <label class="form-label fw-semibold" style="font-size: 13px;">Pilih Akun Warga yang Didaftarkan:</label>
                     <select id="adminScanTargetUserId" class="form-select form-select-sm" onchange="onScanTargetUserChanged()">
+                        <option value="{{ auth()->id() }}" data-nama="{{ auth()->user()->nama }}" data-rumah="{{ auth()->user()->warga?->no_rumah ?? '-' }}" selected>
+                            ⭐ [AKUN SAYA SENDIRI] {{ auth()->user()->nama }} ({{ auth()->user()->role }}) {{ auth()->user()->hasRfidRegistered() ? '✓ [KTP: ' . auth()->user()->rfid_uid . ']' : '[Belum Terdaftar]' }}
+                        </option>
                         @foreach ($wargaUsers as $wu)
-                            <option value="{{ $wu->id }}" data-nama="{{ $wu->nama }}" data-rumah="{{ $wu->warga?->no_rumah ?? '-' }}">
-                                {{ $wu->nama }} ({{ $wu->role }}) {{ $wu->warga?->no_rumah ? '- No. ' . $wu->warga->no_rumah : '' }} {{ $wu->hasRfidRegistered() ? '✓ [KTP: ' . $wu->rfid_uid . ']' : '[Belum Terdaftar]' }}
-                            </option>
+                            @if ($wu->id !== auth()->id())
+                                <option value="{{ $wu->id }}" data-nama="{{ $wu->nama }}" data-rumah="{{ $wu->warga?->no_rumah ?? '-' }}">
+                                    {{ $wu->nama }} ({{ $wu->role }}) {{ $wu->warga?->no_rumah ? '- No. ' . $wu->warga->no_rumah : '' }} {{ $wu->hasRfidRegistered() ? '✓ [KTP: ' . $wu->rfid_uid . ']' : '[Belum Terdaftar]' }}
+                                </option>
+                            @endif
                         @endforeach
                     </select>
                 </div>
 
                 <!-- Info Box Target Warga Aktif -->
                 <div class="p-2 mb-3 rounded-2 text-center" style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2);">
-                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Target Warga Aktif</div>
-                    <div class="fw-bold text-primary fs-6" id="scanTargetUserDisplay">-</div>
-                    <div style="font-size: 12px; color: #475569;" id="scanTargetHouseDisplay">-</div>
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Target Registrasi e-KTP</div>
+                    <div class="fw-bold text-primary fs-6" id="scanTargetUserDisplay">{{ auth()->user()->nama }}</div>
+                    <div style="font-size: 12px; color: #475569;" id="scanTargetHouseDisplay">Akun yang Sedang Login</div>
                 </div>
 
                 <!-- Radar pulse animation -->
@@ -508,30 +617,62 @@ const SIMULATE_TAP_URL = "{{ route('ketua.iot_gate.simulate_tap') }}";
 const LOGS_DATA_URL = "{{ route('ketua.iot_gate.logs_data') }}";
 const CSRF_TOKEN = "{{ csrf_token() }}";
 
+const LOGGED_IN_USER_ID = {{ auth()->id() }};
+const LOGGED_IN_USER_NAME = "{{ addslashes(auth()->user()->nama) }}";
+const LOGGED_IN_USER_HOUSE = "{{ auth()->user()->warga?->no_rumah ?? '-' }}";
+
 let adminScanInterval = null;
 let adminCountdownTimer = null;
-let currentTargetUserId = null;
-let currentTargetUserName = '';
-let currentTargetHouseNo = '';
+let currentTargetUserId = LOGGED_IN_USER_ID;
+let currentTargetUserName = LOGGED_IN_USER_NAME;
+let currentTargetHouseNo = LOGGED_IN_USER_HOUSE;
 let isScanningActive = false;
 
 // =============================================================================
 // MODAL SCAN ESP32 CONTROLLER
 // =============================================================================
-function openAdminScanModal() {
-    const select = document.getElementById('adminScanTargetUserId');
-    if (select && select.options.length > 0) {
-        if (!currentTargetUserId) {
-            currentTargetUserId = select.options[0].value;
-            currentTargetUserName = select.options[0].dataset.nama || select.options[0].text;
-            currentTargetHouseNo = select.options[0].dataset.rumah || '-';
-        }
+function openAdminScanForSelf() {
+    const btnSelf = document.getElementById('btnTargetSelf');
+    const btnOther = document.getElementById('btnTargetOther');
+    if (btnSelf) {
+        btnSelf.classList.add('active', 'btn-outline-primary');
+        btnSelf.classList.remove('btn-outline-secondary');
     }
-    updateTargetDisplay();
+    if (btnOther) {
+        btnOther.classList.remove('active', 'btn-outline-primary');
+        btnOther.classList.add('btn-outline-secondary');
+    }
+    const container = document.getElementById('adminScanUserSelectContainer');
+    if (container) container.style.display = 'none';
+
+    openAdminScanForUser(LOGGED_IN_USER_ID, LOGGED_IN_USER_NAME + ' (Akun Anda)', LOGGED_IN_USER_HOUSE);
+}
+
+function toggleSelectTargetOther() {
+    const btnSelf = document.getElementById('btnTargetSelf');
+    const btnOther = document.getElementById('btnTargetOther');
+    if (btnOther) {
+        btnOther.classList.add('active', 'btn-outline-primary');
+        btnOther.classList.remove('btn-outline-secondary');
+    }
+    if (btnSelf) {
+        btnSelf.classList.remove('active', 'btn-outline-primary');
+        btnSelf.classList.add('btn-outline-secondary');
+    }
+    const container = document.getElementById('adminScanUserSelectContainer');
+    if (container) container.style.display = 'block';
+
+    const select = document.getElementById('adminScanTargetUserId');
+    if (select) {
+        onScanTargetUserChanged();
+    }
+}
+
+function openAdminScanModal() {
+    toggleSelectTargetOther();
     const modalEl = document.getElementById('modalAdminScanEsp32');
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
-    startAdminScan(currentTargetUserId);
 }
 
 function openAdminScanForUser(userId, userName, houseNo) {
