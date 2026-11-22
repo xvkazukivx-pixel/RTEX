@@ -451,9 +451,37 @@ class IotGateController extends Controller
 
         $logs = $logsQuery->paginate(20)->withQueryString();
 
-        // Daftar semua user warga untuk opsi pendaftaran KTP oleh admin
+        // Sinkronisasi otomatis: pastikan seluruh warga di Kelola Warga memiliki akun user agar bisa didaftarkan e-KTP dan membuka portal
+        $unlinkedWargas = Warga::whereDoesntHave('user')->get();
+        if ($unlinkedWargas->isNotEmpty()) {
+            foreach ($unlinkedWargas as $uw) {
+                $cleanName = trim($uw->nama);
+                $base = Str::slug($cleanName, '_');
+                if (empty($base)) {
+                    $base = 'warga_' . $uw->id;
+                }
+                $username = $base;
+                $counter = 1;
+                while (User::where('username', $username)->exists()) {
+                    $username = $base . '_' . $counter;
+                    $counter++;
+                }
+
+                User::create([
+                    'nama' => $uw->nama,
+                    'username' => $username,
+                    'password' => \Illuminate\Support\Facades\Hash::make('warga123'),
+                    'role' => 'warga',
+                    'warga_id' => $uw->id,
+                    'rfid_is_active' => true,
+                ]);
+            }
+        }
+
+        // Daftar semua user & warga untuk opsi pendaftaran KTP oleh admin
         $wargaUsers = User::with('warga')
             ->orderByRaw("CASE WHEN rfid_uid IS NOT NULL THEN 0 ELSE 1 END")
+            ->orderByRaw("CASE WHEN role = 'super_admin' THEN 1 WHEN role IN ('rt', 'ketua') THEN 2 WHEN role IN ('bendahara_rt', 'bendahara', 'admin') THEN 3 WHEN role = 'sekretaris_rt' THEN 4 WHEN role = 'rw' THEN 5 WHEN role = 'bendahara_rw' THEN 6 WHEN role = 'sekretaris_rw' THEN 7 ELSE 8 END")
             ->orderBy('nama')
             ->get();
 

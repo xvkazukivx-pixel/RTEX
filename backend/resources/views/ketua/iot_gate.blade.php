@@ -233,8 +233,12 @@
     <div class="tab-pane fade" id="tab-users" role="tabpanel">
         <div class="card-rt">
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                <div class="section-title mb-0"><span class="dot"></span> Daftar Pengguna & Status Hak Akses KTP</div>
                 <div>
+                    <div class="section-title mb-0"><span class="dot"></span> Daftar Seluruh Warga & Hak Akses e-KTP</div>
+                    <div style="font-size: 12.5px; color: #64748b;">Lengkap mencakup seluruh warga RT dari menu Kelola Warga</div>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <input type="text" id="filterKtpWargaInput" class="form-control form-control-sm" placeholder="🔍 Cari nama, rumah, atau UID..." style="width: 250px;" onkeyup="filterKtpWargaTable()">
                     <button type="button" class="btn btn-sm btn-rt-primary" onclick="openAdminScanModal()">
                         📡 Scan e-KTP Baru
                     </button>
@@ -245,8 +249,8 @@
                 <table class="table table-hover align-middle mb-0" style="font-size: 13.5px;">
                     <thead class="table-light">
                         <tr>
-                            <th>Nama Akun</th>
-                            <th>Role</th>
+                            <th>Nama Warga / Akun</th>
+                            <th>Status Peran</th>
                             <th>No. Rumah</th>
                             <th>Status KTP</th>
                             <th>UID e-KTP</th>
@@ -262,10 +266,28 @@
                                     @if ($wu->id === auth()->id())
                                         <span class="badge bg-primary text-white ms-1" style="font-size: 10.5px;">⭐ Akun Anda</span>
                                     @endif
-                                    <div style="font-size: 11.5px; color: #64748b;">{{ $wu->username }}</div>
+                                    <div style="font-size: 11.5px; color: #64748b;">
+                                        Username: <code>{{ $wu->username }}</code>
+                                    </div>
                                 </td>
-                                <td><span class="badge bg-light text-dark border">{{ $wu->role }}</span></td>
-                                <td>{{ $wu->warga?->no_rumah ?: '-' }}</td>
+                                <td>
+                                    @if ($wu->role === 'warga')
+                                        @if ($wu->warga && $wu->warga->kepala_keluarga_id)
+                                            <span class="badge bg-light text-secondary border">Anggota Keluarga</span>
+                                        @else
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Kepala Keluarga</span>
+                                        @endif
+                                    @else
+                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">{{ strtoupper(str_replace('_', ' ', $wu->role)) }}</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($wu->warga?->no_rumah)
+                                        <span class="badge bg-light text-dark border fw-bold">{{ $wu->warga->no_rumah }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
                                 <td>
                                     @if ($wu->hasRfidRegistered())
                                         <span class="badge bg-success-subtle text-success border border-success-subtle">
@@ -816,6 +838,17 @@ function showAdminScanError(msg) {
 // =============================================================================
 // MODAL REGISTER WARGA & SCAN SHORTCUT
 // =============================================================================
+function filterKtpWargaTable() {
+    const input = document.getElementById('filterKtpWargaInput');
+    const filter = input ? input.value.toLowerCase().trim() : '';
+    const rows = document.querySelectorAll('#wargaTableBody tr');
+
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(filter) ? '' : 'none';
+    });
+}
+
 function setEditUserModal(userId, userName, currentUid) {
     document.getElementById('modalUserId').value = userId;
     document.getElementById('modalRfidUid').value = currentUid;

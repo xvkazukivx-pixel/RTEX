@@ -195,6 +195,7 @@ class AdminController extends Controller
                 'status_pendaftaran' => 'Disetujui',
             ]);
             $this->saveNikHash($kepala, $validated['nik']);
+            self::ensureUserForWarga($kepala);
 
             foreach ($validated['anggota'] ?? [] as $anggota) {
                 $warga = Warga::create([
@@ -209,6 +210,7 @@ class AdminController extends Controller
                     'kepala_keluarga_id' => $kepala->id,
                 ]);
                 $this->saveNikHash($warga, $anggota['nik']);
+                self::ensureUserForWarga($warga);
             }
         });
 
@@ -249,9 +251,38 @@ class AdminController extends Controller
                 'kepala_keluarga_id' => $kepala->id,
             ]);
             $this->saveNikHash($anggota, $validated['nik']);
+            self::ensureUserForWarga($anggota);
         });
 
         return back()->with('success', 'Anggota keluarga berhasil ditambahkan.');
+    }
+
+    public static function ensureUserForWarga(Warga $warga): User
+    {
+        if ($warga->user) {
+            return $warga->user;
+        }
+
+        $cleanName = trim($warga->nama);
+        $base = \Illuminate\Support\Str::slug($cleanName, '_');
+        if (empty($base)) {
+            $base = 'warga_' . $warga->id;
+        }
+        $username = $base;
+        $counter = 1;
+        while (User::where('username', $username)->exists()) {
+            $username = $base . '_' . $counter;
+            $counter++;
+        }
+
+        return User::create([
+            'nama' => $warga->nama,
+            'username' => $username,
+            'password' => \Illuminate\Support\Facades\Hash::make('warga123'),
+            'role' => 'warga',
+            'warga_id' => $warga->id,
+            'rfid_is_active' => true,
+        ]);
     }
 
     public function wargaUpdate(Request $request, $id)
