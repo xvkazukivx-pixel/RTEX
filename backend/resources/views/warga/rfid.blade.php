@@ -394,5 +394,12 @@ function runGateSimulation() {
         msg.innerText = 'Gagal menghubungi simulator portal.';
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('scan') === '1') {
+        openScanModal();
+    }
+});
 </script>
 @endsection

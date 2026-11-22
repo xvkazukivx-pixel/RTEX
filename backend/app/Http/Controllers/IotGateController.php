@@ -587,6 +587,9 @@ class IotGateController extends Controller
     {
         $filePath = base_path('firmware_esp32/rtex_portal_esp32.ino');
         if (!file_exists($filePath)) {
+            $filePath = base_path('../firmware_esp32/rtex_portal_esp32.ino');
+        }
+        if (!file_exists($filePath)) {
             abort(404, 'File firmware tidak ditemukan.');
         }
 
