@@ -159,7 +159,7 @@
                     <button type="button" class="btn-quick-role" data-u="sekretaris_rw" data-p="sekretarisrw123" title="Login Sekretaris RW">
                         <span class="role-badge role-sekretaris-rw">📋 Sekretaris RW</span>
                     </button>
-                    <button type="button" class="btn-quick-role" data-u="hafis" data-p="warga123" title="Login Warga">
+                    <button type="button" class="btn-quick-role" data-u="CikalPrayoga" data-p="cikal123" title="Login Warga (Cikal Prayoga)">
                         <span class="role-badge role-warga">👤 Warga</span>
                     </button>
                 </div>
