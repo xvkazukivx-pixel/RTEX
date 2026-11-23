@@ -306,7 +306,7 @@ div.card-rt.stat-blue { background: #397ca9; }
     gap: 12px;
 }
 
-.page-title { font-size: 22px; font-weight: 600; margin: 0; }
+.page-title { font-size: 22px; font-weight: 600; margin: 0; color: #173452; }
 .page-subtitle { color: var(--color-text-muted); font-size: 13.5px; margin-top: 2px; }
 
 .topbar-date {
@@ -1863,13 +1863,33 @@ div.card-rt.stat-blue { background: #397ca9; }
     .dashboard-review__amount { font-size: 10px; }
 }
 
-/* ---------- Tampilan pengelola RTEX ---------- */
+/* ---------- Tampilan pengelola RTEX (Seragam untuk Semua Peran) ---------- */
+body.role-super_admin,
+body.role-bendahara,
+body.role-bendahara_rt,
+body.role-admin,
+body.role-sekretaris_rt,
+body.role-rt,
+body.role-ketua,
+body.role-rw,
+body.role-bendahara_rw,
+body.role-sekretaris_rw,
+body.role-warga,
+body.role-guest {
+    background: var(--color-bg) !important;
+    color: var(--color-text) !important;
+}
+
 body.role-super_admin .sidebar,
 body.role-bendahara .sidebar,
+body.role-bendahara_rt .sidebar,
 body.role-admin .sidebar,
+body.role-sekretaris_rt .sidebar,
 body.role-rt .sidebar,
 body.role-ketua .sidebar,
 body.role-rw .sidebar,
+body.role-bendahara_rw .sidebar,
+body.role-sekretaris_rw .sidebar,
 body.role-warga .sidebar {
     color: #173452;
     background:
@@ -2614,89 +2634,89 @@ body.role-warga .btn-logout {
     transition: all 0.15s ease;
 }
 
-.role-super {
+.role-badge.role-super {
     background: #fdf2f2;
     color: #b91c1c;
     border-color: #fecaca;
 }
-.btn-quick-role:hover .role-super {
+.btn-quick-role:hover .role-badge.role-super {
     background: #b91c1c;
     color: #fff;
     box-shadow: 0 4px 10px rgba(185, 28, 28, 0.25);
 }
 
-.role-rt {
+.role-badge.role-rt {
     background: #fffbeb;
     color: #b45309;
     border-color: #fde68a;
 }
-.btn-quick-role:hover .role-rt {
+.btn-quick-role:hover .role-badge.role-rt {
     background: #b45309;
     color: #fff;
     box-shadow: 0 4px 10px rgba(180, 83, 9, 0.25);
 }
 
-.role-bendahara {
+.role-badge.role-bendahara {
     background: #eff6ff;
     color: #1d4ed8;
     border-color: #bfdbfe;
 }
-.btn-quick-role:hover .role-bendahara {
+.btn-quick-role:hover .role-badge.role-bendahara {
     background: #1d4ed8;
     color: #fff;
     box-shadow: 0 4px 10px rgba(29, 78, 216, 0.25);
 }
 
-.role-sekretaris {
+.role-badge.role-sekretaris {
     background: #f0fdfa;
     color: #0f766e;
     border-color: #99f6e4;
 }
-.btn-quick-role:hover .role-sekretaris {
+.btn-quick-role:hover .role-badge.role-sekretaris {
     background: #0f766e;
     color: #fff;
     box-shadow: 0 4px 10px rgba(15, 118, 110, 0.25);
 }
 
-.role-rw {
+.role-badge.role-rw {
     background: #f0f9ff;
     color: #0369a1;
     border-color: #bae6fd;
 }
-.btn-quick-role:hover .role-rw {
+.btn-quick-role:hover .role-badge.role-rw {
     background: #0369a1;
     color: #fff;
     box-shadow: 0 4px 10px rgba(3, 105, 161, 0.25);
 }
 
-.role-bendahara-rw {
+.role-badge.role-bendahara-rw {
     background: #f0fdf4;
     color: #15803d;
     border-color: #bbf7d0;
 }
-.btn-quick-role:hover .role-bendahara-rw {
+.btn-quick-role:hover .role-badge.role-bendahara-rw {
     background: #15803d;
     color: #fff;
     box-shadow: 0 4px 10px rgba(21, 128, 61, 0.25);
 }
 
-.role-sekretaris-rw {
+.role-badge.role-sekretaris-rw {
     background: #faf5ff;
     color: #7e22ce;
     border-color: #e9d5ff;
 }
-.btn-quick-role:hover .role-sekretaris-rw {
+.btn-quick-role:hover .role-badge.role-sekretaris-rw {
     background: #7e22ce;
     color: #fff;
     box-shadow: 0 4px 10px rgba(126, 34, 206, 0.25);
 }
 
-.role-warga {
+.role-badge.role-warga {
     background: #f8fafc;
     color: #475569;
     border-color: #e2e8f0;
 }
-.btn-quick-role:hover .role-warga {
+.btn-quick-role:hover .role-badge.role-warga {
     background: #475569;
     color: #fff;
     box-shadow: 0 4px 10px rgba(71, 85, 105, 0.25);
