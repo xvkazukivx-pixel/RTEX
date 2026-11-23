@@ -85,15 +85,23 @@
         </div>
 
         @if(session('error'))
-            <div class="alert alert-danger" style="border-radius:8px; font-size:13.5px;">{{ session('error') }}</div>
+            <div class="alert alert-danger" style="border-radius:10px; font-size:13.5px; background:#fff1f2; border:1px solid #fecaca; color:#991b1b;">
+                ⚠️ {{ session('error') }}
+            </div>
         @endif
         @if(session('success'))
-            <div class="alert alert-success" style="border-radius:8px; font-size:13.5px;">{{ session('success') }}</div>
+            <div class="alert alert-success" style="border-radius:10px; font-size:13.5px; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534;">
+                ✓ {{ session('success') }}
+            </div>
         @endif
 
         @if($errors->any())
-            <div class="alert alert-danger" style="border-radius:8px; font-size:13.5px;">
-                <ul class="mb-0 ps-3">
+            <div class="alert alert-danger" style="border-radius:12px; font-size:13px; background:#fff1f2; border:1px solid #fecaca; color:#991b1b; padding:12px 16px;">
+                <div class="fw-bold mb-1 d-flex align-items-center gap-2">
+                    <span style="font-size: 16px;">⚠️</span>
+                    <span>Mohon lengkapi atau periksa kembali data berikut:</span>
+                </div>
+                <ul class="mb-0 ps-3" style="line-height:1.6;">
                     @foreach($errors->all() as $err)
                         <li>{{ $err }}</li>
                     @endforeach
@@ -106,14 +114,24 @@
             <form action="{{ route('login.post') }}" method="POST" id="formLogin" novalidate>
                 @csrf
                 <div class="mb-3">
-                    <label class="form-label-rt">Username</label>
-                    <input type="text" name="username" id="loginUsername" class="form-control-rt" placeholder="Masukkan username" value="{{ old('username') }}" required autofocus>
+                    <label class="form-label-rt">Username (Nama Pengguna)</label>
+                    <input type="text" name="username" id="loginUsername" class="form-control-rt {{ $errors->has('username') && !($registrationErrors || session('tab') === 'daftar') ? 'is-invalid border-danger' : '' }}" placeholder="Masukkan nama pengguna" value="{{ old('username') }}" required autofocus>
+                    @if(!($registrationErrors || session('tab') === 'daftar'))
+                        @error('username')
+                            <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
+                        @enderror
+                    @endif
                 </div>
                 <div class="mb-4">
-                    <label class="form-label-rt">Password</label>
-                    <input type="password" name="password" id="loginPassword" class="form-control-rt" placeholder="Masukkan password" required>
+                    <label class="form-label-rt">Password (Kata Sandi)</label>
+                    <input type="password" name="password" id="loginPassword" class="form-control-rt {{ $errors->has('password') && !($registrationErrors || session('tab') === 'daftar') ? 'is-invalid border-danger' : '' }}" placeholder="Masukkan kata sandi" required>
+                    @if(!($registrationErrors || session('tab') === 'daftar'))
+                        @error('password')
+                            <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
+                        @enderror
+                    @endif
                 </div>
-                <button type="submit" class="btn-rt-primary w-100" style="padding:11px;">Masuk</button>
+                <button type="submit" class="btn-rt-primary w-100" style="padding:11px;">Masuk ke Aplikasi</button>
             </form>
 
             <div class="quick-login-wrap mt-4 pt-3" id="quickLoginWrap" style="display: none;">
@@ -153,47 +171,74 @@
             <form action="{{ route('register.post') }}" method="POST" novalidate>
                 @csrf
                 <div class="mb-3">
-                    <label class="form-label-rt">Nama Lengkap</label>
-                    <input type="text" name="nama" class="form-control-rt" placeholder="Nama sesuai data kependudukan" value="{{ old('nama') }}" required>
+                    <label class="form-label-rt">Nama Lengkap <span class="text-danger">*</span></label>
+                    <input type="text" name="nama" class="form-control-rt {{ $errors->has('nama') ? 'is-invalid border-danger' : '' }}" placeholder="Nama lengkap sesuai data KTP" value="{{ old('nama') }}" required>
+                    @error('nama')
+                        <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="mb-3">
-                    <label class="form-label-rt">NIK (16 digit)</label>
-                    <input type="text" name="nik" class="form-control-rt" inputmode="numeric" pattern="[0-9]{16}" maxlength="16" required>
+                    <label class="form-label-rt">Nomor NIK (16 digit) <span class="text-danger">*</span></label>
+                    <input type="text" name="nik" class="form-control-rt {{ $errors->has('nik') ? 'is-invalid border-danger' : '' }}" placeholder="16 digit angka sesuai KTP" inputmode="numeric" pattern="[0-9]{16}" maxlength="16" value="{{ old('nik') }}" required>
+                    @error('nik')
+                        <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="auth-grid-2 mb-3">
                     <div>
-                        <label class="form-label-rt">No. Rumah</label>
-                        <input type="text" name="no_rumah" class="form-control-rt" placeholder="Contoh: B-12" value="{{ old('no_rumah') }}">
-                        <div class="text-muted-rt mt-1" style="font-size:11px;">Jika nomor rumah sudah terdaftar, akun akan menjadi anggota keluarga.</div>
+                        <label class="form-label-rt">Nomor Rumah</label>
+                        <input type="text" name="no_rumah" class="form-control-rt {{ $errors->has('no_rumah') ? 'is-invalid border-danger' : '' }}" placeholder="Contoh: B-12" value="{{ old('no_rumah') }}">
+                        <div class="text-muted-rt mt-1" style="font-size:11px;">Jika nomor rumah sudah terdaftar, akun Anda akan terhubung ke keluarga tersebut.</div>
+                        @error('no_rumah')
+                            <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
+                        @enderror
                     </div>
                     <div>
-                        <label class="form-label-rt">Status Hunian</label>
-                        <select name="status_hunian" class="form-control-rt">
-                            <option value="Tetap" {{ old('status_hunian') === 'Tetap' ? 'selected' : '' }}>Tetap</option>
-                            <option value="Kontrak" {{ old('status_hunian') === 'Kontrak' ? 'selected' : '' }}>Kontrak</option>
+                        <label class="form-label-rt">Status Tempat Tinggal <span class="text-danger">*</span></label>
+                        <select name="status_hunian" class="form-control-rt {{ $errors->has('status_hunian') ? 'is-invalid border-danger' : '' }}">
+                            <option value="Tetap" {{ old('status_hunian') === 'Tetap' ? 'selected' : '' }}>Rumah Sendiri (Tetap)</option>
+                            <option value="Kontrak" {{ old('status_hunian') === 'Kontrak' ? 'selected' : '' }}>Sewa / Kontrak</option>
                         </select>
+                        @error('status_hunian')
+                            <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label-rt">Alamat</label>
-                    <input type="text" name="alamat" class="form-control-rt" placeholder="Alamat lengkap" value="{{ old('alamat') }}">
+                    <label class="form-label-rt">Alamat Lengkap</label>
+                    <input type="text" name="alamat" class="form-control-rt {{ $errors->has('alamat') ? 'is-invalid border-danger' : '' }}" placeholder="Alamat lengkap (nama jalan / gang / blok)" value="{{ old('alamat') }}">
+                    @error('alamat')
+                        <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="mb-3">
-                    <label class="form-label-rt">No. WhatsApp</label>
-                    <input type="text" name="no_hp" class="form-control-rt" placeholder="08xxxxxxxxxx" value="{{ old('no_hp') }}">
+                    <label class="form-label-rt">Nomor WhatsApp / HP</label>
+                    <input type="text" name="no_hp" class="form-control-rt {{ $errors->has('no_hp') ? 'is-invalid border-danger' : '' }}" placeholder="Contoh: 081234567890" value="{{ old('no_hp') }}">
+                    <div class="text-muted-rt mt-1" style="font-size:11px;">Agar pengurus RT dapat mengirim informasi atau konfirmasi pendaftaran.</div>
+                    @error('no_hp')
+                        <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="auth-grid-2 mb-4">
                     <div>
-                        <label class="form-label-rt">Username</label>
-                        <input type="text" name="username" class="form-control-rt" placeholder="Username baru" value="{{ old('username') }}" required>
+                        <label class="form-label-rt">Username (Nama Pengguna) <span class="text-danger">*</span></label>
+                        <input type="text" name="username" class="form-control-rt {{ $errors->has('username') ? 'is-invalid border-danger' : '' }}" placeholder="Nama untuk masuk aplikasi" value="{{ old('username') }}" required>
+                        <div class="text-muted-rt mt-1" style="font-size:11px;">Bebas huruf & angka tanpa spasi (contoh: ahmad12)</div>
+                        @error('username')
+                            <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
+                        @enderror
                     </div>
                     <div>
-                        <label class="form-label-rt">Password</label>
-                        <input type="password" name="password" class="form-control-rt" placeholder="Min. 6 karakter" required>
+                        <label class="form-label-rt">Password (Kata Sandi) <span class="text-danger">*</span></label>
+                        <input type="password" name="password" class="form-control-rt {{ $errors->has('password') ? 'is-invalid border-danger' : '' }}" placeholder="Minimal 6 karakter" required>
+                        <div class="text-muted-rt mt-1" style="font-size:11px;">Gunakan minimal 6 karakter yang mudah diingat</div>
+                        @error('password')
+                            <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
-                <button type="submit" class="btn-rt-accent w-100" style="padding:11px;">Daftar — Menunggu Persetujuan</button>
-                <p class="text-center text-muted-rt mt-3" style="font-size:11.5px;">Akun Anda baru bisa dipakai setelah disetujui oleh Admin/Bendahara RT.</p>
+                <button type="submit" class="btn-rt-accent w-100" style="padding:12px; font-weight:600; font-size:14.5px;">Daftar Akun Warga</button>
+                <p class="text-center text-muted-rt mt-3" style="font-size:12px;">Akun Anda akan langsung bisa digunakan setelah diperiksa &amp; disetujui oleh Pengurus RT.</p>
             </form>
         </div>
     </div>

@@ -26,20 +26,23 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
+        ], [
+            'username.required' => 'Silakan masukkan Nama Pengguna (Username) Anda.',
+            'password.required' => 'Silakan masukkan Kata Sandi (Password) Anda.',
         ]);
 
         $user = User::with('warga')->where('username', $credentials['username'])->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
-            return back()->withInput()->with('error', 'Username atau password salah.');
+            return back()->withInput()->with('error', 'Username atau password yang Anda masukkan belum cocok. Silakan periksa kembali.');
         }
 
         if ($user->role === 'warga' && $user->warga) {
             if ($user->warga->status_pendaftaran === 'Menunggu Persetujuan') {
-                return back()->with('error', 'Pendaftaran Anda masih menunggu persetujuan Admin/RT. Silakan coba lagi nanti.');
+                return back()->with('error', 'Pendaftaran Anda sedang menunggu persetujuan pengurus RT. Mohon kesediaannya menunggu konfirmasi.');
             }
             if ($user->warga->status_pendaftaran === 'Ditolak') {
-                return back()->with('error', 'Pendaftaran Anda tidak disetujui. Silakan hubungi Admin/Bendahara RT.');
+                return back()->with('error', 'Pendaftaran akun Anda belum dapat disetujui. Silakan hubungi Ketua atau Bendahara RT.');
             }
         }
 
@@ -58,7 +61,7 @@ class AuthController extends Controller
                 'digits:16',
                 function (string $attribute, mixed $value, Closure $fail): void {
                     if (Warga::where('nik_hash', Warga::nikHash((string) $value))->exists()) {
-                        $fail('NIK ini sudah terdaftar.');
+                        $fail('Nomor NIK ini sudah pernah terdaftar di sistem warga.');
                     }
                 },
             ],
@@ -69,8 +72,17 @@ class AuthController extends Controller
             'username' => 'required|string|max:50|unique:users,username',
             'password' => 'required|string|min:6',
         ], [
-            'nik.required' => 'NIK wajib diisi.',
-            'nik.digits' => 'NIK harus terdiri dari 16 angka.',
+            'nama.required' => 'Mohon isi Nama Lengkap Anda sesuai KTP.',
+            'nama.max' => 'Nama Lengkap maksimal 100 karakter.',
+            'nik.required' => 'Nomor NIK (16 digit angka) wajib diisi.',
+            'nik.digits' => 'Nomor NIK harus terdiri dari 16 digit angka sesuai KTP.',
+            'status_hunian.required' => 'Pilih Status Tempat Tinggal (Tetap atau Kontrak).',
+            'status_hunian.in' => 'Status tempat tinggal harus dipilih Tetap atau Kontrak.',
+            'username.required' => 'Mohon buat Username (nama panggilan untuk masuk ke aplikasi).',
+            'username.unique' => 'Username ini sudah dipakai warga lain. Silakan pilih nama lain.',
+            'username.max' => 'Username maksimal 50 karakter.',
+            'password.required' => 'Kata sandi (password) wajib diisi.',
+            'password.min' => 'Kata sandi minimal harus 6 karakter agar akun Anda aman.',
         ]);
 
         $kepala = ! empty($validated['no_rumah'])
