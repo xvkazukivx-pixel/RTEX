@@ -163,6 +163,13 @@
                 </div>
             </div>
 
+            <div class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center gap-2" style="font-size: 12.5px; border-radius: 8px;">
+                <span style="font-size: 16px;">💡</span>
+                <div>
+                    <strong>Informasi Log Akses:</strong> Tabel ini mencatat rekaman setiap kali ada kartu e-KTP ditempelkan ke portal. Jika kartu belum didaftarkan ke warga manapun, sistem mencatatnya sebagai <strong>"⚠️ Tidak Dikenal"</strong> dan portal otomatis terkunci demi keamanan. Data seluruh warga RT dapat dilihat pada tab <strong>"👥 Data KTP Seluruh Warga"</strong>.
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" style="font-size: 13.5px;">
                     <thead class="table-light">
@@ -181,9 +188,18 @@
                             <tr>
                                 <td>{{ $log->tapped_at->format('H:i:s - d/m/Y') }}</td>
                                 <td>
-                                    <strong>{{ $log->warga_nama }}</strong>
-                                    @if ($log->user)
-                                        <div style="font-size: 11px; color: #64748b;">Role: {{ $log->user->role }}</div>
+                                    @if ($log->warga_nama === 'Tidak Dikenal' || !$log->user_id)
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold">
+                                            ⚠️ Tidak Dikenal
+                                        </span>
+                                        <div class="text-muted" style="font-size: 11px; margin-top: 2px;">(KTP belum terdaftar)</div>
+                                    @else
+                                        <strong>{{ $log->warga_nama }}</strong>
+                                        @if ($log->user)
+                                            <div style="font-size: 11px; color: #64748b;">
+                                                {{ $log->user->role === 'warga' ? 'Warga RT' : strtoupper(str_replace('_', ' ', $log->user->role)) }}
+                                            </div>
+                                        @endif
                                     @endif
                                 </td>
                                 <td><span class="badge bg-light text-dark border">{{ $log->no_rumah ?: '-' }}</span></td>
@@ -978,9 +994,14 @@ function fetchLatestLogs(notifyUser) {
                             portalAction = '<span class="text-warning fw-semibold">🟡 Buka Manual</span>';
                         }
 
+                        const isUnknown = log.warga_nama === 'Tidak Dikenal' || !log.user_id;
+                        const nameDisplay = isUnknown
+                            ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold">⚠️ Tidak Dikenal</span><div class="text-muted" style="font-size: 11px; margin-top: 2px;">(KTP belum terdaftar)</div>`
+                            : `<strong>${log.warga_nama}</strong>`;
+
                         html += `<tr>
                             <td>${log.tapped_at}</td>
-                            <td><strong>${log.warga_nama}</strong></td>
+                            <td>${nameDisplay}</td>
                             <td><span class="badge bg-light text-dark border">${log.no_rumah}</span></td>
                             <td><code class="font-monospace fw-semibold">${log.rfid_uid}</code></td>
                             <td>${badgeStatus}</td>
