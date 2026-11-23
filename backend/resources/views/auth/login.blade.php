@@ -67,9 +67,9 @@
 </head>
 <body>
 @php
-    $registrationErrors = $errors->hasAny([
-        'nama', 'nik', 'no_rumah', 'alamat', 'no_hp', 'status_hunian', 'username', 'password',
-    ]);
+    $isRegisterForm = old('action_type') === 'register'
+        || $errors->hasAny(['nama', 'nik', 'no_rumah', 'alamat', 'no_hp', 'status_hunian'])
+        || session('tab') === 'daftar';
 @endphp
 <div class="auth-shell">
     <div class="auth-card">
@@ -80,43 +80,44 @@
         <p class="text-center text-muted-rt mb-4" style="font-size:13px;">Sistem Iuran, Kas &amp; Layanan Warga RT Digital</p>
 
         <div class="auth-tabs">
-            <button type="button" class="auth-tab-btn {{ $registrationErrors || session('tab') === 'daftar' ? '' : 'active' }}" data-tab="panelMasuk">Masuk Akun</button>
-            <button type="button" class="auth-tab-btn {{ $registrationErrors || session('tab') === 'daftar' ? 'active' : '' }}" data-tab="panelDaftar">Daftar Akun</button>
+            <button type="button" class="auth-tab-btn {{ $isRegisterForm ? '' : 'active' }}" data-tab="panelMasuk">Masuk Akun</button>
+            <button type="button" class="auth-tab-btn {{ $isRegisterForm ? 'active' : '' }}" data-tab="panelDaftar">Daftar Akun</button>
         </div>
 
-        @if(session('error'))
-            <div class="alert alert-danger" style="border-radius:10px; font-size:13.5px; background:#fff1f2; border:1px solid #fecaca; color:#991b1b;">
-                ⚠️ {{ session('error') }}
-            </div>
-        @endif
-        @if(session('success'))
-            <div class="alert alert-success" style="border-radius:10px; font-size:13.5px; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534;">
-                ✓ {{ session('success') }}
-            </div>
-        @endif
-
-        @if($errors->any())
-            <div class="alert alert-danger" style="border-radius:12px; font-size:13px; background:#fff1f2; border:1px solid #fecaca; color:#991b1b; padding:12px 16px;">
-                <div class="fw-bold mb-1 d-flex align-items-center gap-2">
-                    <span style="font-size: 16px;">⚠️</span>
-                    <span>Mohon lengkapi atau periksa kembali data berikut:</span>
-                </div>
-                <ul class="mb-0 ps-3" style="line-height:1.6;">
-                    @foreach($errors->all() as $err)
-                        <li>{{ $err }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
         <!-- PANEL MASUK AKUN -->
-        <div id="panelMasuk" class="auth-panel {{ $registrationErrors || session('tab') === 'daftar' ? '' : 'active' }}">
+        <div id="panelMasuk" class="auth-panel {{ $isRegisterForm ? '' : 'active' }}">
+            @if(session('error'))
+                <div class="alert alert-danger mb-3" style="border-radius:10px; font-size:13.5px; background:#fff1f2; border:1px solid #fecaca; color:#991b1b;">
+                    ⚠️ {{ session('error') }}
+                </div>
+            @endif
+            @if(session('success'))
+                <div class="alert alert-success mb-3" style="border-radius:10px; font-size:13.5px; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534;">
+                    ✓ {{ session('success') }}
+                </div>
+            @endif
+
+            @if($errors->any() && !$isRegisterForm)
+                <div class="alert alert-danger mb-3" style="border-radius:12px; font-size:13px; background:#fff1f2; border:1px solid #fecaca; color:#991b1b; padding:12px 16px;">
+                    <div class="fw-bold mb-1 d-flex align-items-center gap-2">
+                        <span style="font-size: 16px;">⚠️</span>
+                        <span>Mohon periksa data masuk akun Anda:</span>
+                    </div>
+                    <ul class="mb-0 ps-3" style="line-height:1.6;">
+                        @foreach($errors->all() as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <form action="{{ route('login.post') }}" method="POST" id="formLogin" novalidate>
                 @csrf
+                <input type="hidden" name="action_type" value="login">
                 <div class="mb-3">
                     <label class="form-label-rt">Username (Nama Pengguna)</label>
-                    <input type="text" name="username" id="loginUsername" class="form-control-rt {{ $errors->has('username') && !($registrationErrors || session('tab') === 'daftar') ? 'is-invalid border-danger' : '' }}" placeholder="Masukkan nama pengguna" value="{{ old('username') }}" required autofocus>
-                    @if(!($registrationErrors || session('tab') === 'daftar'))
+                    <input type="text" name="username" id="loginUsername" class="form-control-rt {{ $errors->has('username') && !$isRegisterForm ? 'is-invalid border-danger' : '' }}" placeholder="Masukkan nama pengguna" value="{{ old('username') }}" required autofocus>
+                    @if(!$isRegisterForm)
                         @error('username')
                             <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
                         @enderror
@@ -124,8 +125,8 @@
                 </div>
                 <div class="mb-4">
                     <label class="form-label-rt">Password (Kata Sandi)</label>
-                    <input type="password" name="password" id="loginPassword" class="form-control-rt {{ $errors->has('password') && !($registrationErrors || session('tab') === 'daftar') ? 'is-invalid border-danger' : '' }}" placeholder="Masukkan kata sandi" required>
-                    @if(!($registrationErrors || session('tab') === 'daftar'))
+                    <input type="password" name="password" id="loginPassword" class="form-control-rt {{ $errors->has('password') && !$isRegisterForm ? 'is-invalid border-danger' : '' }}" placeholder="Masukkan kata sandi" required>
+                    @if(!$isRegisterForm)
                         @error('password')
                             <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
                         @enderror
@@ -167,9 +168,24 @@
         </div>
 
         <!-- PANEL DAFTAR AKUN (WARGA) -->
-        <div id="panelDaftar" class="auth-panel {{ $registrationErrors || session('tab') === 'daftar' ? 'active' : '' }}">
+        <div id="panelDaftar" class="auth-panel {{ $isRegisterForm ? 'active' : '' }}">
+            @if($errors->any() && $isRegisterForm)
+                <div class="alert alert-danger mb-3" style="border-radius:12px; font-size:13px; background:#fff1f2; border:1px solid #fecaca; color:#991b1b; padding:12px 16px;">
+                    <div class="fw-bold mb-1 d-flex align-items-center gap-2">
+                        <span style="font-size: 16px;">⚠️</span>
+                        <span>Mohon lengkapi atau periksa kembali data pendaftaran:</span>
+                    </div>
+                    <ul class="mb-0 ps-3" style="line-height:1.6;">
+                        @foreach($errors->all() as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <form action="{{ route('register.post') }}" method="POST" novalidate>
                 @csrf
+                <input type="hidden" name="action_type" value="register">
                 <div class="mb-3">
                     <label class="form-label-rt">Nama Lengkap <span class="text-danger">*</span></label>
                     <input type="text" name="nama" class="form-control-rt {{ $errors->has('nama') ? 'is-invalid border-danger' : '' }}" placeholder="Nama lengkap sesuai data KTP" value="{{ old('nama') }}" required>
