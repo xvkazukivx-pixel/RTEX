@@ -303,19 +303,52 @@ div.card-rt.stat-blue { background: #397ca9; }
     justify-content: space-between;
     margin-bottom: 24px;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 14px;
+    background: linear-gradient(135deg, #173452 0%, #1e5282 45%, #247cbb 85%, #2ba5e2 100%) !important;
+    border-radius: 16px !important;
+    padding: 18px 24px !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 22px -4px rgba(23, 80, 134, 0.22) !important;
+    border: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+    min-height: 52px;
+}
+.topbar::after {
+    content: '';
+    position: absolute;
+    right: -30px;
+    top: -30px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 70%);
+    pointer-events: none;
 }
 
-.page-title { font-size: 22px; font-weight: 600; margin: 0; color: #173452; }
-.page-subtitle { color: var(--color-text-muted); font-size: 13.5px; margin-top: 2px; }
+.page-title {
+    font-family: var(--font-display) !important;
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    color: #ffffff !important;
+    letter-spacing: -0.2px;
+}
+.page-subtitle {
+    color: rgba(255, 255, 255, 0.88) !important;
+    font-size: 13.5px !important;
+    margin-top: 3px !important;
+}
 
 .topbar-date {
-    font-size: 13px;
-    color: var(--color-text-muted);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    padding: 7px 14px;
-    border-radius: 20px;
+    font-size: 13px !important;
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    padding: 7px 16px !important;
+    border-radius: 20px !important;
+    backdrop-filter: blur(4px);
+    font-weight: 500;
 }
 
 /* ---------- Cards ---------- */
@@ -874,15 +907,21 @@ div.card-rt.stat-blue { background: #397ca9; }
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 8px 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    background: var(--color-surface);
-    color: var(--color-primary-dark);
+    padding: 7px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
     font: inherit;
     font-size: 13px;
     cursor: pointer;
     flex-shrink: 0;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+}
+.sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.28) !important;
+    color: #ffffff !important;
 }
 
 .sidebar-close { display: none; }
@@ -2078,8 +2117,7 @@ body.role-warga .btn-logout {
 .role-rw .topbar,
 .role-warga .topbar {
     min-height: 52px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #edf0ec;
+    border-bottom: none !important;
 }
 
 .role-super_admin .dashboard-hero,

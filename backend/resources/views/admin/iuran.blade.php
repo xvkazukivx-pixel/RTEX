@@ -6,63 +6,7 @@
 
 @push('styles')
 <style>
-/* 1. Header Topbar dengan Gradasi RTEX (Memindahkan latar banner ke topbar) */
-.topbar {
-    background: linear-gradient(135deg, #173452 0%, #1e5282 45%, #247cbb 85%, #2ba5e2 100%) !important;
-    border-radius: 16px !important;
-    padding: 18px 24px !important;
-    color: #ffffff !important;
-    box-shadow: 0 8px 22px -4px rgba(23, 80, 134, 0.22) !important;
-    border: none !important;
-    margin-bottom: 22px !important;
-    position: relative !important;
-    overflow: hidden !important;
-}
-.topbar::after {
-    content: '';
-    position: absolute;
-    right: -30px;
-    top: -30px;
-    width: 220px;
-    height: 220px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 70%);
-    pointer-events: none;
-}
-.topbar .page-title {
-    color: #ffffff !important;
-    font-family: var(--font-display) !important;
-    font-weight: 700 !important;
-    font-size: 22px !important;
-    margin: 0 !important;
-}
-.topbar .page-subtitle {
-    color: rgba(255, 255, 255, 0.88) !important;
-    font-size: 13.5px !important;
-    margin-top: 3px !important;
-}
-.topbar .sidebar-toggle {
-    background: rgba(255, 255, 255, 0.18) !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: 10px !important;
-    padding: 7px 14px !important;
-    backdrop-filter: blur(4px);
-}
-.topbar .sidebar-toggle:hover {
-    background: rgba(255, 255, 255, 0.28) !important;
-}
-.topbar .topbar-date {
-    background: rgba(255, 255, 255, 0.18) !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: 20px !important;
-    padding: 7px 16px !important;
-    font-size: 13px !important;
-    backdrop-filter: blur(4px);
-}
-
-/* 2. Kartu Metrik Ringkasan */
+/* Kartu Metrik Ringkasan */
 .iuran-stat-card {
     background: #ffffff;
     border-radius: 16px;
