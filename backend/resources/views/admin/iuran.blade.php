@@ -113,7 +113,7 @@
 .nav-iuran-tabs {
     border-bottom: none;
     gap: 8px;
-    margin-bottom: 18px;
+    margin-bottom: 0;
 }
 .nav-iuran-tabs .nav-link {
     border: 1px solid var(--color-border);
@@ -214,24 +214,41 @@
     </div>
 </div>
 
-<!-- NAVIGATION TABS -->
-<ul class="nav nav-pills nav-iuran-tabs" id="iuranTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="tab-riwayat-btn" data-bs-toggle="pill" data-bs-target="#tab-riwayat" type="button" role="tab">
-            💳 Daftar Pembayaran Iuran ({{ $totalTransaksi }})
+<!-- NAVIGATION TABS & ACTION BUTTON (Di bawah kotak tarif iuran bulanan) -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+    <ul class="nav nav-pills nav-iuran-tabs mb-0" id="iuranTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-riwayat-btn" data-bs-toggle="pill" data-bs-target="#tab-riwayat" type="button" role="tab">
+                💳 Daftar Pembayaran Iuran ({{ $totalTransaksi }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-tagihan-btn" data-bs-toggle="pill" data-bs-target="#tab-tagihan" type="button" role="tab">
+                👥 Monitoring Tagihan Warga (Per KK)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-tarif-btn" data-bs-toggle="pill" data-bs-target="#tab-tarif" type="button" role="tab">
+                ⚙️ Tarif & Komponen Iuran ({{ $daftarIuran->count() }})
+            </button>
+        </li>
+    </ul>
+
+    <!-- Action Buttons (Pojok kanan, tepat di bawah kotak Tarif Iuran Bulanan) -->
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn-rt-primary fw-bold d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalCatatBayar" style="padding:8px 20px; font-size:13.5px; border-radius:999px; box-shadow:0 3px 10px rgba(36,124,187,0.22);">
+            <span style="font-size:16px; font-weight:800; line-height:1;">+</span> Catat Bayar Iuran
         </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="tab-tagihan-btn" data-bs-toggle="pill" data-bs-target="#tab-tagihan" type="button" role="tab">
-            👥 Monitoring Tagihan Warga (Per KK)
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="tab-tarif-btn" data-bs-toggle="pill" data-bs-target="#tab-tarif" type="button" role="tab">
-            ⚙️ Tarif & Komponen Iuran ({{ $daftarIuran->count() }})
-        </button>
-    </li>
-</ul>
+        @if (!$tagihanBulanIniAda)
+            <form action="{{ route('admin.dashboard.generate') }}" method="POST" class="d-inline" onsubmit="return confirm('Terbitkan tagihan baru untuk seluruh kepala keluarga aktif periode {{ periode_label($periodeBerjalan) }}?');">
+                @csrf
+                <button type="submit" class="btn-rt-outline fw-semibold d-inline-flex align-items-center gap-1" style="padding:7px 14px; font-size:12.5px; border-radius:999px;">
+                    ⚡ Terbitkan Tagihan {{ periode_label($periodeBerjalan) }}
+                </button>
+            </form>
+        @endif
+    </div>
+</div>
 
 <div class="tab-content" id="iuranTabsContent">
 
@@ -240,28 +257,14 @@
     <!-- ========================================================================= -->
     <div class="tab-pane fade show active" id="tab-riwayat" role="tabpanel">
         <div class="card-iuran-table mb-4">
-            <!-- Header Card & Search Filter & Action Button -->
+            <!-- Header Card & Search Filter -->
             <div class="table-header">
                 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
                     <div>
-                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <div class="section-title mb-0" style="font-size:16px;">
-                                <span class="dot"></span> Daftar Pembayaran Iuran Warga
-                            </div>
-                            <!-- Tombol + Catat Bayar Iuran (Dipindahkan ke sini sesuai tanda panah kuning) -->
-                            <button type="button" class="btn-rt-primary fw-bold d-inline-flex align-items-center gap-1 ms-1" data-bs-toggle="modal" data-bs-target="#modalCatatBayar" style="padding:6px 16px; font-size:13px; border-radius:999px; box-shadow:0 2px 8px rgba(36,124,187,0.25);">
-                                <span style="font-size:16px; font-weight:800; line-height:1;">+</span> Catat Bayar Iuran
-                            </button>
-                            @if (!$tagihanBulanIniAda)
-                                <form action="{{ route('admin.dashboard.generate') }}" method="POST" class="d-inline" onsubmit="return confirm('Terbitkan tagihan baru untuk seluruh kepala keluarga aktif periode {{ periode_label($periodeBerjalan) }}?');">
-                                    @csrf
-                                    <button type="submit" class="btn-rt-outline fw-semibold d-inline-flex align-items-center gap-1" style="padding:6px 14px; font-size:12.5px; border-radius:999px;">
-                                        ⚡ Terbitkan Tagihan {{ periode_label($periodeBerjalan) }}
-                                    </button>
-                                </form>
-                            @endif
+                        <div class="section-title mb-1" style="font-size:16px;">
+                            <span class="dot"></span> Daftar Pembayaran Iuran Warga
                         </div>
-                        <div class="text-muted-rt mt-1" style="font-size:12.5px;">
+                        <div class="text-muted-rt" style="font-size:12.5px;">
                             Riwayat pembayaran iuran warga melalui tunai maupun transfer QRIS.
                         </div>
                     </div>
