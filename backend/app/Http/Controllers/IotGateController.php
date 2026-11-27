@@ -68,7 +68,7 @@ class IotGateController extends Controller
             ], 401);
         }
 
-        $rawUid = $request->input('uid');
+        $rawUid = $request->input('uid') ?: $request->input('rfid_uid');
         if (empty($rawUid)) {
             return response()->json([
                 'success' => false,
