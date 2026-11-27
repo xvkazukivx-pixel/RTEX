@@ -6,63 +6,63 @@
 
 @push('styles')
 <style>
-.iuran-hero-banner {
-    background: linear-gradient(135deg, #173452 0%, #1e5282 45%, #247cbb 85%, #2ba5e2 100%);
-    border-radius: 18px;
-    padding: 26px 30px;
-    color: #ffffff;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 10px 25px -5px rgba(23, 80, 134, 0.22);
-    margin-bottom: 24px;
+/* 1. Header Topbar dengan Gradasi RTEX (Memindahkan latar banner ke topbar) */
+.topbar {
+    background: linear-gradient(135deg, #173452 0%, #1e5282 45%, #247cbb 85%, #2ba5e2 100%) !important;
+    border-radius: 16px !important;
+    padding: 18px 24px !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 22px -4px rgba(23, 80, 134, 0.22) !important;
+    border: none !important;
+    margin-bottom: 22px !important;
+    position: relative !important;
+    overflow: hidden !important;
 }
-.iuran-hero-banner::after {
+.topbar::after {
     content: '';
     position: absolute;
-    right: -40px;
-    top: -40px;
-    width: 240px;
-    height: 240px;
+    right: -30px;
+    top: -30px;
+    width: 220px;
+    height: 220px;
     border-radius: 50%;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 70%);
     pointer-events: none;
 }
-.iuran-badge-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255, 255, 255, 0.16);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    color: #ffffff;
-    padding: 4px 14px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    margin-bottom: 10px;
+.topbar .page-title {
+    color: #ffffff !important;
+    font-family: var(--font-display) !important;
+    font-weight: 700 !important;
+    font-size: 22px !important;
+    margin: 0 !important;
 }
-.btn-iuran-hero {
-    background: #ffffff;
-    color: #173452 !important;
-    font-weight: 700;
-    font-size: 13.5px;
-    padding: 10px 20px;
-    border-radius: 999px;
-    border: none;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s ease;
-    text-decoration: none;
+.topbar .page-subtitle {
+    color: rgba(255, 255, 255, 0.88) !important;
+    font-size: 13.5px !important;
+    margin-top: 3px !important;
 }
-.btn-iuran-hero:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
-    background: #f8fbff;
+.topbar .sidebar-toggle {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 10px !important;
+    padding: 7px 14px !important;
+    backdrop-filter: blur(4px);
 }
+.topbar .sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.28) !important;
+}
+.topbar .topbar-date {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 20px !important;
+    padding: 7px 16px !important;
+    font-size: 13px !important;
+    backdrop-filter: blur(4px);
+}
+
+/* 2. Kartu Metrik Ringkasan */
 .iuran-stat-card {
     background: #ffffff;
     border-radius: 16px;
@@ -108,6 +108,8 @@
     align-items: center;
     gap: 6px;
 }
+
+/* 3. Tab Navigasi */
 .nav-iuran-tabs {
     border-bottom: none;
     gap: 8px;
@@ -133,6 +135,8 @@
     color: #ffffff;
     box-shadow: 0 4px 12px rgba(36, 124, 187, 0.25);
 }
+
+/* 4. Tabel Card */
 .card-iuran-table {
     background: #ffffff;
     border-radius: 16px;
@@ -170,35 +174,7 @@
 
 @section('content')
 
-<!-- HERO BANNER (Identik RTEX Blue Gradient) -->
-<div class="iuran-hero-banner">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-        <div>
-            <div class="iuran-badge-pill">
-                <span>🏷️</span> IURAN BULANAN DIGITAL
-            </div>
-            <h2 class="mb-1 fw-bold" style="font-family:var(--font-display); font-size:25px; color:#ffffff;">Pengelolaan Iuran Warga RT</h2>
-            <p class="mb-0" style="color:rgba(255,255,255,0.88); font-size:13.5px; max-width:640px;">
-                Rekap pembayaran iuran bulanan kebersihan, keamanan, dan kas sosial warga secara transparan dan akuntabel.
-            </p>
-        </div>
-        <div class="d-flex flex-wrap gap-2 align-items-center">
-            <button type="button" class="btn-iuran-hero" data-bs-toggle="modal" data-bs-target="#modalCatatBayar">
-                <span style="font-size:17px; font-weight:800; line-height:1;">+</span> Catat Bayar Iuran
-            </button>
-            @if (!$tagihanBulanIniAda)
-                <form action="{{ route('admin.dashboard.generate') }}" method="POST" class="d-inline" onsubmit="return confirm('Terbitkan tagihan baru untuk seluruh kepala keluarga aktif periode {{ periode_label($periodeBerjalan) }}?');">
-                    @csrf
-                    <button type="submit" class="btn btn-outline-light px-3 py-2 rounded-pill fw-semibold" style="font-size:13px; border-color:rgba(255,255,255,0.4);">
-                        ⚡ Terbitkan Tagihan {{ periode_label($periodeBerjalan) }}
-                    </button>
-                </form>
-            @endif
-        </div>
-    </div>
-</div>
-
-<!-- METRIC STATS CARDS (Identik konsep referensi, disesuaikan RTEX) -->
+<!-- METRIC STATS CARDS -->
 <div class="row g-3 mb-4">
     <div class="col-12 col-sm-6 col-lg-3">
         <div class="iuran-stat-card">
@@ -260,33 +236,48 @@
 <div class="tab-content" id="iuranTabsContent">
 
     <!-- ========================================================================= -->
-    <!-- TAB 1: DAFTAR PEMBAYARAN IURAN WARGA (IDENTIK REFERENSI DENGAN BRAND RTEX) -->
+    <!-- TAB 1: DAFTAR PEMBAYARAN IURAN WARGA                                      -->
     <!-- ========================================================================= -->
     <div class="tab-pane fade show active" id="tab-riwayat" role="tabpanel">
         <div class="card-iuran-table mb-4">
-            <!-- Header Card & Search Filter -->
+            <!-- Header Card & Search Filter & Action Button -->
             <div class="table-header">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
                     <div>
-                        <div class="section-title mb-1" style="font-size:16px;">
-                            <span class="dot"></span> Daftar Pembayaran Iuran Warga
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <div class="section-title mb-0" style="font-size:16px;">
+                                <span class="dot"></span> Daftar Pembayaran Iuran Warga
+                            </div>
+                            <!-- Tombol + Catat Bayar Iuran (Dipindahkan ke sini sesuai tanda panah kuning) -->
+                            <button type="button" class="btn-rt-primary fw-bold d-inline-flex align-items-center gap-1 ms-1" data-bs-toggle="modal" data-bs-target="#modalCatatBayar" style="padding:6px 16px; font-size:13px; border-radius:999px; box-shadow:0 2px 8px rgba(36,124,187,0.25);">
+                                <span style="font-size:16px; font-weight:800; line-height:1;">+</span> Catat Bayar Iuran
+                            </button>
+                            @if (!$tagihanBulanIniAda)
+                                <form action="{{ route('admin.dashboard.generate') }}" method="POST" class="d-inline" onsubmit="return confirm('Terbitkan tagihan baru untuk seluruh kepala keluarga aktif periode {{ periode_label($periodeBerjalan) }}?');">
+                                    @csrf
+                                    <button type="submit" class="btn-rt-outline fw-semibold d-inline-flex align-items-center gap-1" style="padding:6px 14px; font-size:12.5px; border-radius:999px;">
+                                        ⚡ Terbitkan Tagihan {{ periode_label($periodeBerjalan) }}
+                                    </button>
+                                </form>
+                            @endif
                         </div>
-                        <div class="text-muted-rt" style="font-size:12.5px;">
+                        <div class="text-muted-rt mt-1" style="font-size:12.5px;">
                             Riwayat pembayaran iuran warga melalui tunai maupun transfer QRIS.
                         </div>
                     </div>
+
                     <!-- Quick Filters Form -->
                     <form method="GET" action="{{ route('admin.iuran') }}" class="d-flex flex-wrap align-items-center gap-2">
-                        <input type="text" name="q" value="{{ request('q') }}" class="form-control-rt" placeholder="Cari nama / rumah..." style="width:190px; font-size:13px; padding:6px 12px;">
+                        <input type="text" name="q" value="{{ request('q') }}" class="form-control-rt" placeholder="Cari nama / rumah..." style="width:175px; font-size:13px; padding:6px 12px;">
                         
-                        <select name="status" class="form-select-rt" style="width:150px; font-size:13px; padding:6px 10px;">
+                        <select name="status" class="form-select-rt" style="width:145px; font-size:13px; padding:6px 10px;">
                             <option value="all">Semua Status</option>
                             <option value="Diterima" {{ request('status') == 'Diterima' ? 'selected' : '' }}>Diterima / Lunas</option>
                             <option value="Menunggu" {{ request('status') == 'Menunggu' ? 'selected' : '' }}>Menunggu Konfirmasi</option>
                             <option value="Ditolak" {{ request('status') == 'Ditolak' ? 'selected' : '' }}>Ditolak</option>
                         </select>
 
-                        <select name="metode" class="form-select-rt" style="width:140px; font-size:13px; padding:6px 10px;">
+                        <select name="metode" class="form-select-rt" style="width:135px; font-size:13px; padding:6px 10px;">
                             <option value="all">Semua Metode</option>
                             <option value="Tunai" {{ request('metode') == 'Tunai' ? 'selected' : '' }}>Tunai</option>
                             <option value="Transfer" {{ request('metode') == 'Transfer' ? 'selected' : '' }}>Transfer</option>
@@ -300,7 +291,7 @@
                 </div>
             </div>
 
-            <!-- Table Riwayat Pembayaran (Persis kolom referensi) -->
+            <!-- Table Riwayat Pembayaran -->
             @if ($riwayatTransaksi->isEmpty())
                 <div class="empty-state py-5 text-center">
                     <div style="font-size:36px; margin-bottom:10px;">🧾</div>
@@ -610,7 +601,7 @@
 </div>
 
 <!-- ========================================================================= -->
-<!-- MODAL: + CATAT BAYAR IURAN (CEPAT LANGSUNG DARI HALAMAN INI)               -->
+<!-- MODAL: + CATAT BAYAR IURAN                                                -->
 <!-- ========================================================================= -->
 <div class="modal fade" id="modalCatatBayar" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
