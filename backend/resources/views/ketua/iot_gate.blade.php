@@ -73,6 +73,11 @@
             <div class="section-title mb-1"><span class="dot"></span> Kontrol Gerbang & Alat IoT</div>
             <div class="text-muted-rt" style="font-size: 13.5px;">
                 Status Server IoT: <span class="badge bg-success-subtle text-success border border-success-subtle">● ONLINE</span>
+                &nbsp;|&nbsp;
+                Alat ESP32: 
+                <span id="esp32DeviceStatusBadge" class="badge {{ !empty($isDeviceOnline) ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle' }}">
+                    {{ !empty($isDeviceOnline) ? '● ONLINE' : '○ OFFLINE' }}
+                </span>
                 &nbsp;|&nbsp; Login: <b>{{ auth()->user()->nama }}</b> ({{ auth()->user()->role }})
                 &nbsp;|&nbsp; Status KTP Anda: 
                 @if (auth()->user()->hasRfidRegistered())
@@ -1033,5 +1038,25 @@ function fetchLatestLogs(notifyUser) {
 setInterval(() => {
     fetchLatestLogs(false);
 }, 8000);
+
+// Polling status hardware ESP32 online/offline setiap 3 detik
+function pollEspDeviceStatus() {
+    fetch('{{ route("api.rfid.last_scanned") }}')
+        .then(res => res.json())
+        .then(data => {
+            const badge = document.getElementById('esp32DeviceStatusBadge');
+            if (badge) {
+                if (data.device_online) {
+                    badge.className = 'badge bg-success-subtle text-success border border-success-subtle';
+                    badge.innerHTML = '● ONLINE';
+                } else {
+                    badge.className = 'badge bg-danger-subtle text-danger border border-danger-subtle';
+                    badge.innerHTML = '○ OFFLINE';
+                }
+            }
+        })
+        .catch(() => {});
+}
+setInterval(pollEspDeviceStatus, 3000);
 </script>
 @endsection

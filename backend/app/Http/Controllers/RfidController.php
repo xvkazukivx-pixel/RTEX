@@ -185,13 +185,13 @@ class RfidController extends Controller
             ], 401);
         }
 
-        // 2. Simpan status alat online di Cache selama 15 detik
-        Cache::put('rfid_device_online', true, now()->addSeconds(15));
+        // 2. Simpan status alat online di Cache selama 6 detik (ESP32 heartbeat setiap 2 detik)
+        Cache::put('rfid_device_online', true, now()->addSeconds(6));
         Cache::put('rfid_device_info', [
             'device_id' => $request->input('device_id', 'esp32-scanner-02'),
             'ip' => $request->input('ip', $request->ip()),
             'last_seen' => now()->toIso8601String(),
-        ], now()->addSeconds(15));
+        ], now()->addSeconds(6));
 
         // 3. Kembalikan response JSON HTTP 200
         return response()->json([

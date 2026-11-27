@@ -27,6 +27,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -99,6 +100,7 @@ class AdminController extends Controller
         $totalGateScans = class_exists(\App\Models\GateAccessLog::class) ? \App\Models\GateAccessLog::count() : 0;
         $pengaduanMenunggu = Pengaduan::where('status', 'Menunggu')->count();
         $rataRataPenerimaan = count($kasGrafik) > 0 ? round(array_sum($kasGrafik) / count($kasGrafik)) : 0;
+        $isDeviceOnline = (bool) Cache::get('rfid_device_online', false);
 
         return view('admin.dashboard', compact(
             'periode', 'kasBulanIni', 'totalWargaAktif', 'wargaLunas',
@@ -107,7 +109,8 @@ class AdminController extends Controller
             'saldoKas', 'suratMenunggu', 'kegiatanMenunggu',
             'totalJiwa', 'totalPosyandu', 'totalTunggakan', 'jumlahTunggakan',
             'persenLunas', 'salam', 'transaksiTerbaru',
-            'totalGateScans', 'pengaduanMenunggu', 'rataRataPenerimaan'
+            'totalGateScans', 'pengaduanMenunggu', 'rataRataPenerimaan',
+            'isDeviceOnline'
         ));
     }
 

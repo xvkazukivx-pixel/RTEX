@@ -712,9 +712,11 @@
                         <span class="text-muted-rt">Posyandu Balita:</span>
                         <strong>{{ $totalPosyandu }} Anak</strong>
                     </div>
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between align-items-center">
                         <span class="text-muted-rt">Portal RFID:</span>
-                        <strong class="text-success">ESP32 Online</strong>
+                        <span id="dashboardEspStatus" class="badge {{ !empty($isDeviceOnline) ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle' }}" style="font-size:11px;">
+                            {{ !empty($isDeviceOnline) ? '● ESP32 Online' : '○ ESP32 Offline' }}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -1008,3 +1010,29 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function checkEspStatus() {
+        fetch('{{ route("api.rfid.last_scanned") }}')
+            .then(res => res.json())
+            .then(data => {
+                const el = document.getElementById('dashboardEspStatus');
+                if (el) {
+                    if (data.device_online) {
+                        el.className = 'badge bg-success-subtle text-success border border-success-subtle';
+                        el.innerHTML = '● ESP32 Online';
+                    } else {
+                        el.className = 'badge bg-danger-subtle text-danger border border-danger-subtle';
+                        el.innerHTML = '○ ESP32 Offline';
+                    }
+                }
+            })
+            .catch(() => {});
+    }
+    // Poll every 3 seconds to reflect real-time physical ESP32 status
+    setInterval(checkEspStatus, 3000);
+});
+</script>
+@endpush

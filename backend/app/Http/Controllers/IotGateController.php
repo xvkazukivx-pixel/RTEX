@@ -9,6 +9,7 @@ use App\Models\Warga;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Str;
 
@@ -211,8 +212,11 @@ class IotGateController extends Controller
      */
     public function status(Request $request): JsonResponse
     {
+        $isDeviceOnline = (bool) Cache::get('rfid_device_online', false);
         return response()->json([
             'status' => 'online',
+            'device_status' => $isDeviceOnline ? 'online' : 'offline',
+            'is_device_online' => $isDeviceOnline,
             'server_time' => Carbon::now()->toIso8601String(),
             'active_cards_count' => User::whereNotNull('rfid_uid')->where('rfid_is_active', true)->count(),
             'total_access_today' => GateAccessLog::whereDate('tapped_at', Carbon::today())->count(),
@@ -486,8 +490,9 @@ class IotGateController extends Controller
             ->get();
 
         $viewName = auth()->user()->isKetua() || auth()->user()->isRw() ? 'ketua.iot_gate' : 'admin.iot_gate';
+        $isDeviceOnline = (bool) Cache::get('rfid_device_online', false);
 
-        return view($viewName, compact('stats', 'logs', 'wargaUsers', 'statusFilter', 'search'));
+        return view($viewName, compact('stats', 'logs', 'wargaUsers', 'statusFilter', 'search', 'isDeviceOnline'));
     }
 
     /**
