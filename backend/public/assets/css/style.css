@@ -2766,3 +2766,247 @@ body.role-warga .btn-logout {
     font-size: 11px;
     color: var(--color-text-muted);
 }
+
+/* =========================================================
+   DARK MODE SYSTEM (RTEX)
+   ========================================================= */
+
+/* Theme Toggle Button in Topbar */
+.theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    font-size: 16px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+.theme-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.28) !important;
+    transform: scale(1.05);
+}
+
+/* Dark Theme Variables */
+[data-theme="dark"] {
+    --color-bg: #0b1320;
+    --color-surface: #152238;
+    --color-surface-hover: #1c2d47;
+    --color-text: #f1f5f9;
+    --color-text-muted: #94a3b8;
+    --color-border: #22354f;
+    --color-primary-light: #163252;
+    --color-primary-dark: #f8fafc;
+}
+
+[data-theme="dark"] body {
+    background-color: #0b1320 !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .app-shell {
+    background-color: #0b1320 !important;
+}
+
+/* Sidebar in Dark Mode */
+[data-theme="dark"] .sidebar {
+    background: #0f1929 !important;
+    border-right: 1px solid #1a2a40 !important;
+    color: #e2e8f0 !important;
+}
+[data-theme="dark"] .sidebar-brand {
+    border-bottom: 1px solid #1a2a40 !important;
+}
+[data-theme="dark"] .sidebar-brand .brand-title {
+    color: #ffffff !important;
+}
+[data-theme="dark"] .sidebar-brand .brand-sub {
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .sidebar-role {
+    color: #64748b !important;
+}
+[data-theme="dark"] .sidebar-nav a,
+[data-theme="dark"] body.role-super_admin .sidebar-nav a,
+[data-theme="dark"] body.role-bendahara .sidebar-nav a,
+[data-theme="dark"] body.role-admin .sidebar-nav a,
+[data-theme="dark"] body.role-rt .sidebar-nav a,
+[data-theme="dark"] body.role-ketua .sidebar-nav a,
+[data-theme="dark"] body.role-rw .sidebar-nav a,
+[data-theme="dark"] body.role-warga .sidebar-nav a {
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .sidebar-nav a:hover,
+[data-theme="dark"] body.role-super_admin .sidebar-nav a:hover,
+[data-theme="dark"] body.role-bendahara .sidebar-nav a:hover,
+[data-theme="dark"] body.role-admin .sidebar-nav a:hover,
+[data-theme="dark"] body.role-rt .sidebar-nav a:hover,
+[data-theme="dark"] body.role-ketua .sidebar-nav a:hover,
+[data-theme="dark"] body.role-rw .sidebar-nav a:hover,
+[data-theme="dark"] body.role-warga .sidebar-nav a:hover {
+    background: rgba(36, 124, 187, 0.2) !important;
+    color: #38bdf8 !important;
+}
+[data-theme="dark"] .sidebar-nav a.active,
+[data-theme="dark"] body.role-super_admin .sidebar-nav a.active,
+[data-theme="dark"] body.role-bendahara .sidebar-nav a.active,
+[data-theme="dark"] body.role-admin .sidebar-nav a.active,
+[data-theme="dark"] body.role-rt .sidebar-nav a.active,
+[data-theme="dark"] body.role-ketua .sidebar-nav a.active,
+[data-theme="dark"] body.role-rw .sidebar-nav a.active,
+[data-theme="dark"] body.role-warga .sidebar-nav a.active {
+    background: linear-gradient(100deg, #1d72b8, #2563eb) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+}
+[data-theme="dark"] .sidebar-foot {
+    border-top: 1px solid #1a2a40 !important;
+}
+[data-theme="dark"] .sidebar-foot .user-name,
+[data-theme="dark"] body.role-super_admin .sidebar-foot .user-name,
+[data-theme="dark"] body.role-bendahara .sidebar-foot .user-name,
+[data-theme="dark"] body.role-admin .sidebar-foot .user-name,
+[data-theme="dark"] body.role-rt .sidebar-foot .user-name,
+[data-theme="dark"] body.role-ketua .sidebar-foot .user-name,
+[data-theme="dark"] body.role-rw .sidebar-foot .user-name,
+[data-theme="dark"] body.role-warga .sidebar-foot .user-name {
+    color: #f1f5f9 !important;
+}
+[data-theme="dark"] .sidebar-foot .user-role {
+    color: #94a3b8 !important;
+}
+
+/* Cards & Widgets in Dark Mode */
+[data-theme="dark"] .card-rt,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .iuran-stat-card,
+[data-theme="dark"] .card-iuran-table,
+[data-theme="dark"] .admin-dashboard .stat-card,
+[data-theme="dark"] .dashboard-metric {
+    background: #152238 !important;
+    border-color: #22354f !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+    color: #f1f5f9 !important;
+}
+[data-theme="dark"] .iuran-stat-val,
+[data-theme="dark"] .stat-value,
+[data-theme="dark"] .section-title,
+[data-theme="dark"] .section-title strong {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .iuran-stat-label,
+[data-theme="dark"] .stat-label {
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .card-iuran-table .table-header {
+    border-bottom-color: #22354f !important;
+}
+
+/* Tables in Dark Mode */
+[data-theme="dark"] .table-rt {
+    color: #e2e8f0 !important;
+    border-color: #22354f !important;
+}
+[data-theme="dark"] .table-rt th {
+    background: #111c2e !important;
+    color: #94a3b8 !important;
+    border-bottom: 1px solid #22354f !important;
+}
+[data-theme="dark"] .table-rt td {
+    border-bottom: 1px solid #1c2d47 !important;
+    color: #cbd5e1 !important;
+    background: transparent !important;
+}
+[data-theme="dark"] .table-rt tbody tr:hover td {
+    background: #1c2d47 !important;
+}
+[data-theme="dark"] .tag-house {
+    background: #172d47 !important;
+    color: #7dd3fc !important;
+}
+
+/* Forms, Inputs, Selects in Dark Mode */
+[data-theme="dark"] .form-control-rt,
+[data-theme="dark"] .form-select-rt,
+[data-theme="dark"] input.form-control,
+[data-theme="dark"] select.form-select,
+[data-theme="dark"] textarea.form-control-rt,
+[data-theme="dark"] .letter-form-grid .form-control-rt,
+[data-theme="dark"] .letter-form-section > .form-control-rt {
+    background: #111c2e !important;
+    border-color: #263c5a !important;
+    color: #f1f5f9 !important;
+}
+[data-theme="dark"] .form-control-rt::placeholder,
+[data-theme="dark"] input.form-control::placeholder {
+    color: #64748b !important;
+}
+[data-theme="dark"] .form-control-rt:focus,
+[data-theme="dark"] .form-select-rt:focus,
+[data-theme="dark"] input.form-control:focus {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+    background: #111c2e !important;
+}
+[data-theme="dark"] .form-label-rt,
+[data-theme="dark"] .letter-form-section .form-label-rt {
+    color: #cbd5e1 !important;
+}
+
+/* Modals in Dark Mode */
+[data-theme="dark"] .modal-content {
+    background: #152238 !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #263c5a !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
+}
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+    border-color: #22354f !important;
+}
+[data-theme="dark"] .modal-title {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Tabs & Outlines in Dark Mode */
+[data-theme="dark"] .nav-iuran-tabs .nav-link {
+    background: #111c2e !important;
+    border-color: #263c5a !important;
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .nav-iuran-tabs .nav-link:hover {
+    color: #38bdf8 !important;
+    border-color: #38bdf8 !important;
+}
+[data-theme="dark"] .nav-iuran-tabs .nav-link.active {
+    background: linear-gradient(135deg, #1d72b8 0%, #2563eb 100%) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+}
+[data-theme="dark"] .btn-rt-outline {
+    background: transparent !important;
+    border-color: #334d70 !important;
+    color: #cbd5e1 !important;
+}
+[data-theme="dark"] .btn-rt-outline:hover {
+    background: #1c2d47 !important;
+    border-color: #476a96 !important;
+    color: #ffffff !important;
+}
+[data-theme="dark"] .empty-state {
+    background: #111c2e !important;
+    border-color: #22354f !important;
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .text-muted-rt {
+    color: #94a3b8 !important;
+}

@@ -102,3 +102,35 @@ function previewFileName(input, targetId) {
         target.textContent = '📎 ' + input.files[0].name;
     }
 }
+
+// ==========================================
+// GANTI TAMPILAN TERANG / GELAP (DARK MODE)
+// ==========================================
+function updateThemeIcon(theme) {
+    const icon = document.getElementById('themeToggleIcon');
+    if (icon) {
+        icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) {
+        btn.setAttribute('title', theme === 'dark' ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap');
+    }
+}
+
+// Inisialisasi ikon saat DOM siap
+document.addEventListener('DOMContentLoaded', function () {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('rtex_theme') || 'light';
+    updateThemeIcon(currentTheme);
+});
+
+// Event listener klik tombol toggle mode terang/gelap
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('#themeToggleBtn');
+    if (btn) {
+        const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('rtex_theme', newTheme);
+        updateThemeIcon(newTheme);
+    }
+});
