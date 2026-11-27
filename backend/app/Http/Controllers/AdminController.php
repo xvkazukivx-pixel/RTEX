@@ -439,8 +439,9 @@ class AdminController extends Controller
     // ==========================================
     // 4. MANAJEMEN IURAN
     // ==========================================
-    public function iuran()
+    public function iuran(Request $request)
     {
+        // 1. Pengaturan jenis & nominal iuran
         $daftarIuran = IuranSetting::orderBy('status_aktif', 'desc')->orderBy('nama_iuran', 'asc')->get();
         $totalAktif = $daftarIuran->where('status_aktif', true)->sum('nominal');
         $grafikIuran = $daftarIuran->map(fn ($iuran) => [
@@ -449,7 +450,89 @@ class AdminController extends Controller
             'aktif' => (bool) $iuran->status_aktif,
         ]);
 
-        return view('admin.iuran', compact('daftarIuran', 'totalAktif', 'grafikIuran'));
+        // 2. Metrik ringkasan iuran
+        $totalTerverifikasi = Transaksi::where('status_konfirmasi', 'Diterima')->sum('jumlah_bayar');
+        $totalTransaksi = Transaksi::count();
+        $totalTunggakan = Tagihan::where('status', '!=', 'Lunas')->sum('total_tagihan');
+        $jumlahTunggakan = Tagihan::where('status', '!=', 'Lunas')->count();
+        $menungguKonfirmasi = Transaksi::where('status_konfirmasi', 'Menunggu')->count();
+        $nominalMenunggu = Transaksi::where('status_konfirmasi', 'Menunggu')->sum('jumlah_bayar');
+
+        // 3. Filter query untuk Daftar Pembayaran
+        $q = $request->input('q');
+        $statusFilter = $request->input('status');
+        $metodeFilter = $request->input('metode');
+        $periodeFilter = $request->input('periode');
+
+        $transaksiQuery = Transaksi::with(['warga', 'tagihan', 'konfirmator'])
+            ->orderBy('id', 'desc');
+
+        if ($q) {
+            $transaksiQuery->where(function ($sub) use ($q) {
+                $sub->whereHas('warga', function ($w) use ($q) {
+                    $w->where('nama', 'like', "%{$q}%")
+                      ->orWhere('no_rumah', 'like', "%{$q}%")
+                      ->orWhere('nik', 'like', "%{$q}%");
+                })->orWhere('keterangan', 'like', "%{$q}%");
+            });
+        }
+
+        if ($statusFilter && $statusFilter !== 'all') {
+            $transaksiQuery->where('status_konfirmasi', $statusFilter);
+        }
+
+        if ($metodeFilter && $metodeFilter !== 'all') {
+            $transaksiQuery->where('metode', $metodeFilter);
+        }
+
+        if ($periodeFilter && $periodeFilter !== 'all') {
+            $transaksiQuery->whereHas('tagihan', function ($t) use ($periodeFilter) {
+                $t->where('periode', $periodeFilter);
+            });
+        }
+
+        $riwayatTransaksi = $transaksiQuery->paginate(15)->withQueryString();
+
+        // 4. Daftar Periode unik untuk dropdown filter
+        $daftarPeriode = Tagihan::select('periode')->distinct()->orderBy('periode', 'desc')->pluck('periode');
+
+        // 5. Warga yang belum lunas (untuk modal catat bayar cepat)
+        $daftarWargaBelumLunas = Warga::whereHas('tagihan', fn ($query) => $query->where('status', '!=', 'Lunas'))
+            ->with(['tagihan' => fn ($query) => $query->where('status', '!=', 'Lunas')->orderBy('periode', 'asc')])
+            ->orderBy('nama', 'asc')
+            ->get();
+
+        // 6. Monitoring status tagihan per warga/KK
+        $tagihanQuery = Tagihan::with('warga')->orderBy('periode', 'desc')->orderBy('id', 'desc');
+        if ($periodeFilter && $periodeFilter !== 'all') {
+            $tagihanQuery->where('periode', $periodeFilter);
+        }
+        $daftarTagihan = $tagihanQuery->paginate(20, ['*'], 'tagihan_page')->withQueryString();
+
+        $periodeBerjalan = periode_sekarang();
+        $tagihanBulanIniAda = Tagihan::where('periode', $periodeBerjalan)->exists();
+
+        return view('admin.iuran', compact(
+            'daftarIuran',
+            'totalAktif',
+            'grafikIuran',
+            'totalTerverifikasi',
+            'totalTransaksi',
+            'totalTunggakan',
+            'jumlahTunggakan',
+            'menungguKonfirmasi',
+            'nominalMenunggu',
+            'riwayatTransaksi',
+            'daftarPeriode',
+            'daftarWargaBelumLunas',
+            'daftarTagihan',
+            'periodeBerjalan',
+            'tagihanBulanIniAda',
+            'q',
+            'statusFilter',
+            'metodeFilter',
+            'periodeFilter'
+        ));
     }
 
     public function iuranStore(Request $request)
@@ -550,6 +633,11 @@ class AdminController extends Controller
 
             $tagihan->update(['status' => 'Lunas']);
         });
+
+        if ($request->input('redirect_to') === 'iuran' || $request->input('source') === 'iuran') {
+            return redirect()->route('admin.iuran')
+                ->with('success', 'Pembayaran iuran warga ' . ($tagihan->warga ? $tagihan->warga->nama : '') . ' berhasil dicatat dan status tagihan lunas.');
+        }
 
         return redirect()->route('admin.transaksi', ['warga_id' => $tagihan->warga_id])
             ->with('success', 'Pembayaran tunai berhasil dicatat dan tagihan berstatus Lunas.');
