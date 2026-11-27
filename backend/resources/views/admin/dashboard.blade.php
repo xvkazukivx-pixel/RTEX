@@ -611,7 +611,7 @@
         <div class="treasury-card">
             <div>
                 <div class="treasury-header">
-                    <span class="treasury-tag">KAS UTAMA RT • PERIODE {{ strtoupper(periode_label($periode)) }}</span>
+                    <span class="treasury-tag">Saldo Kas Utama RT • Periode {{ strtoupper(periode_label($periode)) }}</span>
                     <span class="treasury-badge">
                         <span>●</span> LIKUIDITAS PRIMA
                     </span>
