@@ -96,13 +96,18 @@ class AdminController extends Controller
             ->take(5)
             ->get();
 
+        $totalGateScans = class_exists(\App\Models\GateAccessLog::class) ? \App\Models\GateAccessLog::count() : 0;
+        $pengaduanMenunggu = Pengaduan::where('status', 'Menunggu')->count();
+        $rataRataPenerimaan = count($kasGrafik) > 0 ? round(array_sum($kasGrafik) / count($kasGrafik)) : 0;
+
         return view('admin.dashboard', compact(
             'periode', 'kasBulanIni', 'totalWargaAktif', 'wargaLunas',
             'totalTagihanPeriode', 'menunggu', 'antrianKonfirmasi',
             'periodeGrafik', 'kasGrafik', 'grafikKepatuhan',
             'saldoKas', 'suratMenunggu', 'kegiatanMenunggu',
             'totalJiwa', 'totalPosyandu', 'totalTunggakan', 'jumlahTunggakan',
-            'persenLunas', 'salam', 'transaksiTerbaru'
+            'persenLunas', 'salam', 'transaksiTerbaru',
+            'totalGateScans', 'pengaduanMenunggu', 'rataRataPenerimaan'
         ));
     }
 
