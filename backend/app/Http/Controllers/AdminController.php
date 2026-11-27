@@ -68,12 +68,22 @@ class AdminController extends Controller
         $totalWargaAktif = Warga::where('status_aktif', true)
             ->whereNull('kepala_keluarga_id')
             ->count();
+        $totalJiwa = Warga::count();
+        $totalPosyandu = PosyanduAnak::count();
+        $totalTunggakan = Tagihan::where('status', '!=', 'Lunas')->sum('total_tagihan');
+        $jumlahTunggakan = Tagihan::where('status', '!=', 'Lunas')->count();
+
         $wargaLunas = Tagihan::where('periode', $periode)->where('status', 'Lunas')->count();
         $totalTagihanPeriode = Tagihan::where('periode', $periode)->count();
+        $persenLunas = $totalWargaAktif > 0 ? round(($wargaLunas / $totalWargaAktif) * 100) : 100;
+
         $menunggu = Transaksi::where('status_konfirmasi', 'Menunggu')->count();
         $saldoKas = Transaksi::where('status_konfirmasi', 'Diterima')->sum('jumlah_bayar');
         $suratMenunggu = PengajuanSurat::where('status', 'Menunggu Persetujuan')->count();
         $kegiatanMenunggu = Kegiatan::where('status', 'Menunggu Persetujuan')->count();
+
+        $jam = (int) now()->format('H');
+        $salam = ($jam >= 3 && $jam < 11) ? 'Pagi' : (($jam >= 11 && $jam < 15) ? 'Siang' : (($jam >= 15 && $jam < 18) ? 'Sore' : 'Malam'));
 
         $antrianKonfirmasi = Transaksi::with(['warga', 'tagihan'])
             ->where('status_konfirmasi', 'Menunggu')
@@ -81,11 +91,18 @@ class AdminController extends Controller
             ->limit(5)
             ->get();
 
+        $transaksiTerbaru = Transaksi::with(['warga', 'tagihan'])
+            ->latest('id')
+            ->take(5)
+            ->get();
+
         return view('admin.dashboard', compact(
             'periode', 'kasBulanIni', 'totalWargaAktif', 'wargaLunas',
             'totalTagihanPeriode', 'menunggu', 'antrianKonfirmasi',
             'periodeGrafik', 'kasGrafik', 'grafikKepatuhan',
-            'saldoKas', 'suratMenunggu', 'kegiatanMenunggu'
+            'saldoKas', 'suratMenunggu', 'kegiatanMenunggu',
+            'totalJiwa', 'totalPosyandu', 'totalTunggakan', 'jumlahTunggakan',
+            'persenLunas', 'salam', 'transaksiTerbaru'
         ));
     }
 
